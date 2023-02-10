@@ -10,6 +10,10 @@ echo
 echo $0 $@
 echo
 
+NO_SKIP=$1
+MSDK=$2
+CHIP_UC=$3
+
 echo NO_SKIP: $NO_SKIP
 echo    MSDK: $MSDK
 echo CHIP_UC: $CHIP_UC
