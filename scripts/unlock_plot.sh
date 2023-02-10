@@ -26,6 +26,10 @@ source ~/anaconda3/etc/profile.d/conda.sh && conda activate py3_10
 python3 -c "import sys; print(sys.version)"
 echo
 
+echo "-----------------------------------------------------------------------------------"
+echo "Unlock the used resource files."
+echo
+
 echo "Show lock files in folder Resource_Share."
 ls -hal /home/$USER/Workspace/Resource_Share/*.txt
 echo
@@ -42,6 +46,7 @@ if [ -f "${CURR_JOB_FILE}" ]; then
 else
     echo "${CURR_JOB_FILE} not exist."
 fi
+echo
 
 echo "Show lock files in folder Resource_Share."
 ls -hal /home/$USER/Workspace/Resource_Share/*.txt
