@@ -2,14 +2,14 @@
 
 echo
 echo "#################################################################################################################"
-echo "# board_per_test.sh 1_MSDK 2_BRD1 3_BRD2 4_CURR_TIME 5_CURR_JOB_FILE 6_CURR_LOG 7_all_in_one                    #"
+echo "# board_per_test.sh 1_MSDK 2_BRD1 3_BRD2 4_CURR_TIME 5_CURR_JOB_FILE 6_CURR_LOG 7_all_in_one 8PKG 9PHY 10STEP   #"
 echo "#################################################################################################################"
 echo
 echo $0 $@
 echo
 
-if [[ $# -ne 7 ]]; then
-    echo "Invalid call. Follow: board_per_test.sh 1_MSDK 2_BRD1 3_BRD2 4_CURR_TIME 5_CURR_JOB_FILE 6_CURR_LOG 7_all_in_one"
+if [[ $# -ne 10 ]]; then
+    echo "Invalid call. Follow: board_per_test.sh 1_MSDK 2_BRD1 3_BRD2 4_CURR_TIME 5_CURR_JOB_FILE 6_CURR_LOG 7_all_in_one 8PKG 9PHY 10STEP"
     exit 1
 fi
 
@@ -20,6 +20,10 @@ CURR_TIME=$4
 CURR_JOB_FILE=$5
 CURR_LOG=$6
 all_in_one=$7
+PKG_RA=$8
+PHY_RA=$9
+STEP=${10}
+
 
 echo MSDK: $MSDK
 echo BRD1: $BRD1
@@ -28,6 +32,7 @@ echo CURR_TIME: $CURR_TIME
 echo CURR_JOB_FILE: $CURR_JOB_FILE
 echo CURR_LOG: $CURR_LOG
 echo all_in_one: $all_in_one
+echo
 
 #------------------------------------------------
 echo "Use python 3.10.9."
@@ -69,16 +74,6 @@ echo BRD2_SW_MODEL: ${BRD2_SW_MODEL}
 BRD2_SW_ST=$(python3 -c "import json; import os; obj=json.load(open('${RS_FILE}')); print(obj['${BRD2}']['sw_state'])")
 echo BRD2_SW_ST: ${BRD2_SW_ST}
 echo
-
-DO_IT=${DO_${BRD2_CHIP_UC}}
-PKG_RA=${${BRD2_CHIP_UC}_PKG_RA}
-PHY_RA=${${BRD2_CHIP_UC}_PHY_RA}
-STEP=${${BRD2_CHIP_UC}_STEP}
-
-if [ "${DO_IT}" == "0" ]; then
-echo "Skip the test for ${BRD2_CHIP_UC}."
-exit 0
-fi
 
 echo "#--------------------------------------------------------------------------------------------"
 echo "# PER test on board ${BRD2}"
@@ -195,7 +190,7 @@ do
         
         set -x
         python3 $MSDK/Tools/Bluetooth/conn_sweep.py ${slv_ser} ${mst_ser} ${res_files[i]} \
-            --stp ${BRD2_CON} --pktlen ${pkt_len} --phys ${phy} --step ${step} 2>&1 | tee -a ${CURR_LOG}
+            --stp ${BRD2_CON} --pktlen ${pkt_len} --phys ${phy} --step ${step}
         set +x
 
         echo "cat ${res_files[i]}"
@@ -211,135 +206,7 @@ done
 python3 $MSDK/Tools/Bluetooth/BLE_hci.py ${BRD2_HCI} -c "reset; exit"
 python3 $MSDK/Tools/Bluetooth/BLE_hci.py ${BRD1_HCI} -c "reset; exit"
 
-echo $(date)
-echo "Started at ${start_time}"
-end_secs=$(date +%s)
-exe_time=$((end_secs - start_secs))
 echo
-
-echo "${BRD2_CHIP_UC} test is completed."
-echo "#--------------------------------------------------------------------------------------------"
-echo "cat ${all_in_one}"
-cat "${all_in_one}"
-echo
-echo "Check the PER values."
-python3 ${MSDK}/msdk_ci_per_tool/check_results.py --csv $(realpath ${all_in_one}) --debug
-start_time=$(date)
-start_secs=$(date +%s)
-echo `date`
-echo
-
-#------------------------------------------------
-echo "Disable UART assertion."
-cd ${MSDK}
-echo PWD: `pwd`
-echo
-
-set +e
-sed -i "s/ PAL_SYS_ASSERT(result3 == 0)/ \/\/PAL_SYS_ASSERT(result3 == 0)/g" Libraries/Cordio/platform/targets/maxim/max32655/sources/pal_uart.c || true
-cat Libraries/Cordio/platform/targets/maxim/max32655/sources/pal_uart.c | grep PAL_SYS_ASSERT\(result[0-3]
-
-echo "#--------------------------------------------------------------------------------------------"
-echo "Set the Mini-circuits RF Switches."
-set -x
-echo RF switch for ${BRD1}
-python3 $MSDK/Tools/Bluetooth/mc_rf_sw.py --model ${BRD1_SW_MODEL} --op set --state ${BRD1_SW_ST}
-echo RF switch for ${BRD2}
-python3 $MSDK/Tools/Bluetooth/mc_rf_sw.py --model ${BRD2_SW_MODEL} --op set --state ${BRD2_SW_ST}
-set +x
-echo
-
-echo "#--------------------------------------------------------------------------------------------"
-echo "Build the project BLE5_ctr for the 2nd board ${BRD2}"
-echo
-
-bash -e $MSDK/msdk_dev_tools/scripts/build_flash.sh \
-    ${MSDK} \
-    /home/$USER/Tools/openocd \
-    ${BRD2_CHIP_UC} \
-    ${BRD2_TYPE} \
-    BLE5_ctr \
-    ${BRD2_DAP_SN} \
-    True \
-    False
-set +e
-set +x
-echo
-
-echo "#--------------------------------------------------------------------------------------------"
-echo "Test in different packet length, PHY, attenuation, and txPower"
-
-i=0
-echo "packetLen,phy,atten,txPower,perMaster,perSlave" > "${all_in_one}"
-step=${STEP}
-
-for pkt_len in ${PKG_RA}
-do
-    for phy in ${PHY_RA}
-    do
-        echo "---------------------------------------------------------------------------------------------"
-        echo "Next turn: pkt_len ${pkt_len}, phy ${phy}"
-        echo
-
-        echo "Program or reset the board ${BRD2}."
-        if [[ $i -eq 0 ]]; then
-            echo "Flash the board."            
-            bash -e $MSDK/msdk_dev_tools/scripts/build_flash.sh \
-                ${MSDK} \
-                /home/$USER/Tools/openocd \
-                ${BRD2_CHIP_UC} \
-                ${BRD2_TYPE} \
-                BLE5_ctr \
-                ${BRD2_DAP_SN} \
-                False \
-                True
-        else
-            echo "Reset the board ${BRD1}"
-            set -x
-            nrfjprog --family nrf52 -sn ${BRD1_DAP_SN} --debugreset
-            set +x
-            echo
-
-            echo "Hard reset the board ${BRD2}."
-            bash -ex $MSDK/msdk_dev_tools/scripts/hard_reset.sh ${BRD2_CHIP_LC}.cfg ${BRD2_DAP_SN} $(realpath ${MSDK}/Examples/${BRD2_CHIP_UC}/BLE5_ctr/build/${BRD2_CHIP_LC}.elf)
-            set +e
-            set +x
-            echo
-        fi
-
-        echo
-        echo "Sleep 5 secs."
-        sleep 5
-        echo "Continue the test."
-        echo
-
-        # Run the PER test
-        RESULT_PATH=~/Workspace/ci_results/per
-        res=${RESULT_PATH}/msdk-${CURR_TIME}
-        res_files[i]=${res}_${BRD2_CHIP_LC}_${i}.csv
-        echo "The test results will be saved in file ${res_files[i]}."
-
-        slv_ser=${BRD2_HCI}
-        mst_ser=${BRD1_HCI}
-        
-        set -x
-        python3 $MSDK/Tools/Bluetooth/conn_sweep.py ${slv_ser} ${mst_ser} ${res_files[i]} \
-            --stp ${BRD2_CON} --pktlen ${pkt_len} --phys ${phy} --step ${step} 2>&1 | tee -a ${CURR_LOG}
-        set +x
-
-        echo "cat ${res_files[i]}"
-        cat "${res_files[i]}"
-
-        cat "${res_files[i]}" >> "${all_in_one}"  # put all results into one file
-
-        i=$((i+1))
-    done
-done
-
-# Reset the boards to end the TX
-python3 $MSDK/Tools/Bluetooth/BLE_hci.py ${BRD2_HCI} -c "reset; exit"
-python3 $MSDK/Tools/Bluetooth/BLE_hci.py ${BRD1_HCI} -c "reset; exit"
-
 echo $(date)
 echo "Started at ${start_time}"
 end_secs=$(date +%s)
