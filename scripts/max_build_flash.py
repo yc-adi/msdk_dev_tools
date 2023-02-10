@@ -3,6 +3,13 @@
 
 # @Filename: max_build_flash.py
 
+"""
+Example:
+    ./max_build_flash.py --msdk ~/Workspace/msdk_open --openocd ~/Tools/openocd --board max32655_board_y1 --project BLE5_ctr
+
+    ./max_build_flash.py --msdk ~/Workspace/msdk_open --openocd ~/Tools/openocd --board max32690_board_3 --project Hello_World
+"""
+
 from argparse import ArgumentParser
 from datetime import datetime as dt
 import json
@@ -28,6 +35,7 @@ def run_file(file_name: str, args:dict) -> int:
 
     """
     if not os.path.exists(file_name):
+        print(f'File "{file_name}" not exist.')
         return 11
 
     # ---------------------------------------------------------------------------------------------
@@ -36,7 +44,9 @@ def run_file(file_name: str, args:dict) -> int:
 
     try:
         file_name = os.path.realpath(file_name)
-        p = Popen([f'{file_name} {args["msdk"]} {args["openocd"]} {args["target"]} {args["board_type"]} {args["project"]} {args["ser_sn"]} 2>&1 | tee temp.log'], 
+        print(f'Program: {file_name}')
+        p = Popen([f'{file_name} {args["msdk"]} {args["openocd"]} {args["target"]} {args["board_type"]} ' 
+                   f'{args["project"]} {args["ser_sn"]} {args["build"]} {args["flash"]} 2>&1 | tee temp.log'], 
                     stdout=PIPE, stderr=PIPE, shell=True)
 
         for line in iter(p.stdout.readline, b''):
@@ -58,6 +68,9 @@ def parse_args() -> dict:
     
         Example:
         ./max_build_flash.py --msdk ~/Workspace/msdk_open --openocd ~/Tools/openocd --board max32655_board_y1 --project BLE5_ctr
+
+        ./max_build_flash.py --msdk ~/Workspace/yc/msdk_open --openocd ~/Tools/openocd --board max32690_board_w2 --project Hello_World
+        ./max_build_flash.py --msdk ~/Workspace/yc/msdk_open --openocd ~/Tools/openocd --board max32690_board_w2 --project BLE5_ctr
     """
     parser = ArgumentParser(description="Flash a board with selected program.")
     parser.add_argument("--msdk", type=str, default="~/Workspace/msdk_open",
@@ -68,6 +81,8 @@ def parse_args() -> dict:
                         help="the selected board in ~/Workspace/Resource_Share/boards_config.json")
     parser.add_argument("--project", type=str, default="BLE5_ctr",
                         help="project name")
+    parser.add_argument("--build", action="store_true", help="build the project")
+    parser.add_argument("--flash", action="store_true")
 
     args = parser.parse_args()
 
@@ -84,7 +99,7 @@ def validate_args(input_args: dict) -> dict:
     file = os.path.expanduser('~/Workspace/Resource_Share/boards_config.json')
     print(f'The board configuration file: {file}.')
     json_obj = json.load(open(file))
-    pprint(json_obj)
+    #pprint(json_obj)
 
     input_args["target"] = json_obj[input_args["board"]]["target_upper"]
     input_args["board_type"] = json_obj[input_args["board"]]["type"]
@@ -99,7 +114,7 @@ def main(args: dict):
     print("----------------------------------------------------------------------------------------")
 
     inputs = validate_args(args)
-
+    
     ret = run_file("build_flash.sh", inputs)
 
     if ret in ERR_CODE.keys():
