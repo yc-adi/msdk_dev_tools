@@ -25,13 +25,16 @@ PHY_RA=$9
 STEP=${10}
 
 
-echo MSDK: $MSDK
-echo BRD1: $BRD1
-echo BRD2: $BRD2 
-echo CURR_TIME: $CURR_TIME
+echo          MSDK: $MSDK
+echo          BRD1: $BRD1
+echo          BRD2: $BRD2 
+echo     CURR_TIME: $CURR_TIME
 echo CURR_JOB_FILE: $CURR_JOB_FILE
-echo CURR_LOG: $CURR_LOG
-echo all_in_one: $all_in_one
+echo      CURR_LOG: $CURR_LOG
+echo    all_in_one: $all_in_one
+echo        PKG_RA: $PKG_RA
+echo        PHY_RA: $PHY_RA
+echo          STEP: $STEP
 echo
 
 #------------------------------------------------
