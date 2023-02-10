@@ -63,7 +63,6 @@ echo
 
 cd $GITHUB_WORKSPACE
 echo PWD: `pwd`
-tree -L 1
 echo
 
 cd msdk_ci_per_tool
