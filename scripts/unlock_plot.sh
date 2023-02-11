@@ -52,6 +52,11 @@ echo "Show lock files in folder Resource_Share."
 ls -hal /home/$USER/Workspace/Resource_Share/*.txt
 echo
 
+#----------------------------------------------------------------------------------------------------------------------
+echo "Show results."
+cat ${all_in_one}
+echo
+
 if [ "${NEED_TO_PLOT}" != "True" ]; then
     echo "No need to plot the PER results."
     exit 0
