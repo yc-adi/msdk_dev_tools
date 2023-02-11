@@ -165,7 +165,7 @@ do
         else
             echo "Reset the board ${BRD1}"
             set -x
-            nrfjprog --family nrf52 -sn ${BRD1_DAP_SN} --debugreset
+            nrfjprog --family nrf52 -s ${BRD1_DAP_SN} --debugreset
             set +x
             echo
 
