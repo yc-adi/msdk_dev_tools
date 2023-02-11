@@ -24,7 +24,7 @@ CHIP_LC=${CHIP_UC,,}
 #----------------------------------------------------------------------------------------------------------------------
 # Check if need to do this job or not.
 if [ "${NO_SKIP}" == "1" ]; then
-    echo "Configuration file forces to run this job."
+    echo "Disable the file change check skip."
     echo
 
     exit 0
@@ -43,16 +43,17 @@ BLE_FILES_CHANGED=0
 
 # Check for changes made to these files
 WATCH_FILES="\
+    .github                      \
     Examples/${CHIP_UC}/BLE5_ctr \
-    Libraries/libs.mk \
-    Libraries/Cordio \
-    Libraries/CMSIS/Device/Maxim/${CHIP_UC} \
-    Libraries/PeriphDrivers/libPeriphDriver.mk \
-    Libraries/PeriphDrivers/periphdriver.mk \
+    Libraries/libs.mk            \
+    Libraries/Cordio             \
+    Libraries/CMSIS/Device/Maxim/${CHIP_UC}     \
+    Libraries/PeriphDrivers/libPeriphDriver.mk  \   
+    Libraries/PeriphDrivers/periphdriver.mk     \
     Libraries/PeriphDrivers/${CHIP_LC}_files.mk \
-    Libraries/PeriphDrivers/Source \
-    Libraries/PeriphDrivers/Include/${CHIP_UC} \
-    Libraries/BlePhy/${CHIP_UC} \
+    Libraries/PeriphDrivers/Source              \
+    Libraries/PeriphDrivers/Include/${CHIP_UC}  \
+    Libraries/BlePhy/${CHIP_UC}                 \
     Libraries/Boards/${CHIP_UC}"
     
 # Get the diff from main
