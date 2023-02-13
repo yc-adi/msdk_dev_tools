@@ -192,7 +192,7 @@ do
         mst_ser=${BRD1_HCI}
         
         set -x
-        python3 $MSDK/Tools/Bluetooth/conn_sweep.py ${slv_ser} ${mst_ser} ${res_files[i]} \
+        unbuffer python3 $MSDK/Tools/Bluetooth/conn_sweep.py ${slv_ser} ${mst_ser} ${res_files[i]} \
             --stp ${BRD2_CON} --pktlen ${pkt_len} --phys ${phy} --step ${step}
         set +x
 
@@ -222,7 +222,7 @@ echo "cat ${all_in_one}"
 cat "${all_in_one}"
 echo
 echo "Check the PER values."
-python3 ${MSDK}/msdk_ci_per_tool/check_results.py --csv $(realpath ${all_in_one}) --debug
+unbuffer python3 ${MSDK}/msdk_ci_per_tool/check_results.py --csv $(realpath ${all_in_one}) --debug
 
 if [[ $? -ne 0 ]]; then
     echo
