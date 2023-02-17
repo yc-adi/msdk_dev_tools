@@ -19,6 +19,7 @@ fi
 
 # Example:
 # ./local_full_per_test.sh ~/Workspace/yc/msdk_open MAX32690 WLP_V1 2>&1 | tee test.log
+# ./local_full_per_test.sh ~/Workspace/msdk_open MAX32655 EvKit_V1 2>&1 | tee test_32655.log
 
 #----------------------------------------------------------------------------------------------------------------------
 # Validate the input arguments
@@ -133,8 +134,8 @@ if [[ $? -ne 0 ]]; then
 fi
 #------------------------------------------------
 # Prepare the arguments for function call
-BRD1=nRF52840_1
-BRD2_TYPE=EvKit_V1EvKit_V1EvKit_V1v
+BRD1=nRF52840_2
+BRD2_TYPE=EvKit_V1
 NEW_NAME=DO_${CHIP_UC}
 
 if [ "${CHIP_UC}" == "MAX32690" ] && [ "${BRD_TYPE}" == "WLP_V1" ]; then
@@ -142,7 +143,8 @@ if [ "${CHIP_UC}" == "MAX32690" ] && [ "${BRD_TYPE}" == "WLP_V1" ]; then
     BRD2_TYPE=WLP_V1
     NEW_NAME=DO_${CHIP_UC}_WLP
 elif [ "${CHIP_UC}" == "MAX32655" ]; then
-    BRD2=max32655_board_2
+    #BRD2=max32655_board_2
+    BRD2=max32655_board_y1
 elif [ "${CHIP_UC}" == "MAX32665" ]; then
     BRD2=max32665_board_w3
 elif [ "${CHIP_UC}" == "MAX32690" ]; then
@@ -185,6 +187,7 @@ ${MSDK}/.github/workflows/scripts/board_per_test.sh \
     "${MAX32655_PKG_RA}"         \
     "${MAX32655_PHY_RA}"         \
     ${MAX32655_STEP}             \
+    99.99 \
     2>&1 | tee -a ${CURR_LOG}
 
 if [[ $? -ne 0 ]]; then
