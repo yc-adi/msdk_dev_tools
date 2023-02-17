@@ -2,7 +2,7 @@
 
 echo
 echo "#################################################################################################################"
-echo "# ./local_full_per_test.sh 1_MSDK 2_CHIP_UC 3_BRD_TYPE                                                          #"
+echo "# ./local_full_per_test.sh 1_MSDK 2_CHIP_UC 3_BRD_TYPE 4_SHA                                                    #"
 echo "# Example:                                                                                                      #"
 echo "#     ./local_full_per_test.sh            \                                                                     #"
 echo "#         ~/Workspace/temp/msdk-me18      \                                                                     #"
@@ -10,14 +10,16 @@ echo "#         MAX32690 WLP_V1 2>&1 | tee test.log                             
 echo "#################################################################################################################"
 echo
 echo $0 $@
+echo "Input argument number: $#"
 echo
 
-if [[ $# -ne 3 ]]; then
+if [[ $# -ne 4 ]]; then
     echo "Invalid argument count."
     exit 1
 fi
 
 # Example:
+# NOTE: The Tools/Bluetooth/ must be updated in msdk-me18.
 # ./local_full_per_test.sh ~/Workspace/yc/msdk_open MAX32690 WLP_V1 2>&1 | tee test.log
 # ./local_full_per_test.sh ~/Workspace/msdk_open MAX32655 EvKit_V1 2>&1 | tee test_32655.log
 
@@ -26,21 +28,40 @@ fi
 TEST_MSDK=$1
 CHIP_UC=$2
 BRD_TYPE=$3
+SHA=$4
+
 #----------------------------------------------------------------------------------------------------------------------
 # Prepare the test repositories
-echo "     TEST_MSDK: ${TEST_MSDK}"
-echo "       CHIP_UC: ${CHIP_UC}"
-echo "      BRD_TYPE: ${BRD_TYPE}"
-echo ""
+echo "TEST_MSDK: ${TEST_MSDK}"
+echo "  CHIP_UC: ${CHIP_UC}"
+echo " BRD_TYPE: ${BRD_TYPE}"
+echo "      SHA: ${SHA}"
 
 TEST_ROOT=`realpath ~/temp_safe_to_del`
 
 rm -rf ${TEST_ROOT}
 mkdir -p ${TEST_ROOT}
 
-cp -Rp ${TEST_MSDK}      ${TEST_ROOT}/msdk/
+cp -Rp ${TEST_MSDK} ${TEST_ROOT}/msdk/
 
 MSDK=${TEST_ROOT}/msdk
+echo "MSDK: ${MSDK}"
+cd ${MSDK}
+if [ "x${SHA}" != "x" ]; then
+    base +x git checkout ${SHA}
+    base +x git status -up
+fi
+
+echo "Checkout the latest scripts from Tools/Bluetooth, .github/workflows"
+ls -hal Tools/Bluetooth
+bash +x git checkout Tools/Bluetooth
+ls -hal Tools/Bluetooth
+echo ""
+
+ls -hal .github/workflows
+bash +x git checkout .github/workflows
+ls -hal .github/workflows
+echo ""
 
 # This will be used to search the test used in the configuration json file.
 TEST=local_full_per_test
@@ -49,13 +70,13 @@ cd ${TEST_ROOT}
 echo PWD: `pwd`
 echo ""
 
-echo "Show the PWD folder."
+echo "Show the contents of the test folder."
 tree -a -L 2
 echo ""
 
 #----------------------------------------------------------------------------------------------------------------------
 # Get the configuration
-CONFIG_FILE=/home/$USER/Workspace/ci_config/RF-PHY-closed.json
+CONFIG_FILE=/home/$USER/Workspace/ci_config/msdk.json
 echo CONFIG_FILE: ${CONFIG_FILE}
 echo ""
 
@@ -120,18 +141,26 @@ echo MAX32690_STEP: ${MAX32690_STEP}
 echo MAX32690_WLP_STEP: ${MAX32690_WLP_STEP}
 echo ""
 
+JOB_CURR_TIME=$(date +%Y-%m-%d_%H-%M-%S)
+echo "::set-env name=JOB_CURR_TIME::${JOB_CURR_TIME}"
+echo ""
+
+echo "::set-env name=MSDK::${MSDK}"
+echo ""
+
 #----------------------------------------------------------------------------------------------------------------------
 # Prepare the arguments for script.                    
-#MSDK=TODO
-#CHIP_UC=TODO
 $MSDK/.github/workflows/scripts/msdk_per_skip_check.sh \
     $NO_SKIP \
     $MSDK    \
-    $CHIP_UC
+    $CHIP_UC \
+    $BRD_TYPE
+
 if [[ $? -ne 0 ]]; then
     echo "SKIPPED."
     exit 0
 fi
+
 #------------------------------------------------
 # Prepare the arguments for function call
 BRD1=nRF52840_2
