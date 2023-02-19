@@ -5,9 +5,9 @@
 
 """
 Example:
-    ./max_build_flash.py --msdk ~/Workspace/msdk_open --openocd ~/Tools/openocd --board max32655_board_y1 --project BLE5_ctr
+    ./max_build_flash.py --msdk ~/Workspace/msdk_open --openocd ~/Tools/openocd --board max32655_board_y1 --project BLE5_ctr --build --flash
 
-    ./max_build_flash.py --msdk ~/Workspace/msdk_open --openocd ~/Tools/openocd --board max32690_board_3 --project Hello_World
+    ./max_build_flash.py --msdk ~/Workspace/msdk_open --openocd ~/Tools/openocd --board max32690_board_3 --project Hello_World --build --flash
 """
 
 from argparse import ArgumentParser
@@ -101,7 +101,7 @@ def validate_args(input_args: dict) -> dict:
     json_obj = json.load(open(file))
     #pprint(json_obj)
 
-    input_args["target"] = json_obj[input_args["board"]]["target_upper"]
+    input_args["target"] = json_obj[input_args["board"]]["chip_uc"]
     input_args["board_type"] = json_obj[input_args["board"]]["type"]
     input_args["ser_sn"] = json_obj[input_args["board"]]["DAP_sn"]
 
