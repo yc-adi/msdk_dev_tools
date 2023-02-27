@@ -17,7 +17,7 @@ if [[ $# -ne 4 ]]; then
 fi
 
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-# NOTE: 
+# NOTE:
 #    ~/Workspace/ci_config/msdk.json must be correctly modified for this test.
 #    Tools/Bluetooth must be matched with the checkout version.
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -37,7 +37,7 @@ echo
 
 #----------------------------------------------------------------------------------------------------------------------
 # Get the configuration
-CONFIG_FILE=/home/$USER/Workspace/ci_config/msdk.json
+CONFIG_FILE=~/Workspace/ci_config/RF-PHY-closed.json
 CI_TEST=local_full_per_test
 
 REPO=`python3 -c "import json; import os; obj=json.load(open('${CONFIG_FILE}')); print(obj['tests']['${CI_TEST}']['repo'])"`
@@ -153,6 +153,7 @@ if [ "${DOWNLOAD,,}" == "true" ]; then
 
     bash -x -c "git clone ${REPO} msdk"
 else
+    echo "Keep using the current contents in the folder: ${TEST_ROOT}"
     bash -x -c "rm ${MSDK}/msdk/*.zip"
 fi
 
@@ -163,25 +164,27 @@ echo PWD: `pwd`
 
 if [ "x${COMMIT_ID}" != "x" ]; then
     bash -x -c "git checkout ${COMMIT_ID}"
+    echo
 fi
-git status -u
+
+bash -x -c "git status -u"
 echo
 
-echo "Checkout the latest scripts from Tools/Bluetooth"
-ls -hal Tools/Bluetooth
-echo
-git checkout Tools/Bluetooth
-echo
-ls -hal Tools/Bluetooth
-echo
+#echo "Checkout the latest scripts from Tools/Bluetooth"
+#ls -hal Tools/Bluetooth
+#echo
+#git checkout Tools/Bluetooth
+#echo
+#ls -hal Tools/Bluetooth
+#echo
 
-echo "Checkout the latest scripts from .github/workflows"
-ls -hal .github/workflows
-echo
-git checkout .github/workflows
-echo
-ls -hal .github/workflows
-echo
+#echo "Checkout the latest scripts from .github/workflows"
+#ls -hal .github/workflows
+#echo
+#git checkout .github/workflows
+#echo
+#ls -hal .github/workflows
+#echo
 
 #echo "Remove me !!!"
 #echo "cp -rp ~/Workspace/temp/msdk-me18/.github/ .github/"
@@ -193,22 +196,25 @@ cd ${TEST_ROOT}
 echo PWD: `pwd`
 echo ""
 
-echo "Show the contents of the test folder."
-tree -a -L 2
-echo ""
+#echo "Show the contents of the test folder."
+#tree -a -L 2
+#echo ""
 
 #----------------------------------------------------------------------------------------------------------------------
 # Prepare the arguments for script.                    
-$MSDK/.github/workflows/scripts/msdk_per_skip_check.sh \
+bash $MSDK/Libraries/RF-PHY-closed/.github/workflows/scripts/rf_phy_per_skip_check.sh \
     $NO_SKIP \
     $MSDK    \
     $CHIP_UC \
-    $BRD_TYPE
+    $BRD_TYPE \
+    $JOB_CURR_TIME
 
-if [[ $? -ne 0 ]]; then
-    echo "SKIPPED."
-    exit 0
-fi
+#if [ ! -f ${MSDK}/${CHIP_UC}_${BRD_TIME}_${JOB_CURR_TIME}.do ]; then
+#    echo "SKIPPED."
+#    exit 0
+#else
+#    echo "Test this ${CHIP_UC}"
+#fi
 
 #------------------------------------------------
 # Prepare the arguments for function call
@@ -238,17 +244,17 @@ fi
 
 CURR_TIME=$(date +%Y-%m-%d_%H-%M-%S)
 
-CURR_JOB_FILE=/home/$USER/Workspace/Resource_Share/History/msdk_simple_per_test_${CURR_TIME}_${BRD2_CHIP_LC}.txt
-echo "::set-env name=CURR_JOB_FILE::${CURR_JOB_FILE}"
-CURR_LOG=/home/$USER/Workspace/Resource_Share/Logs/msdk_simple_per_test_${CURR_TIME}_${BRD2_CHIP_LC}.log          
-echo "::set-env name=CURR_LOG::${CURR_LOG}"
+CURR_JOB_FILE=~/Workspace/Resource_Share/Logs/local_full_per_test_${CURR_TIME}_${BRD2_CHIP_LC}.txt
+     CURR_LOG=~/Workspace/Resource_Share/Logs/local_full_per_test_${CURR_TIME}_${BRD2_CHIP_LC}.log
+
 RESULT_PATH=~/Workspace/ci_results/per
-res=${RESULT_PATH}/msdk-${CURR_TIME}
+res=${RESULT_PATH}/local_full_per_test_${CURR_TIME}
 all_in_one=${res}_${BRD2_CHIP_LC}_${BRD2_TYPE}.csv
-echo "::set-env name=all_in_one::${all_in_one}"
+echo "all_in_one:" $all_in_one
+echo
 
 #----------------------------------------------------------------------------------------------------------------------
-${MSDK}/.github/workflows/scripts/board_per_test.sh \
+${MSDK}/Libraries/RF-PHY-closed/.github/workflows/scripts/RF-PHY_board_per_test.sh \
     $MSDK      \
     $BRD1      \
     $BRD2      \
@@ -275,29 +281,6 @@ echo PWD: `pwd`
 echo
 
 chmod u+x ${MSDK}/.github/workflows/scripts/unlock_plot.sh
-echo ${MSDK}/.github/workflows/scripts/unlock_plot.sh ${MSDK} "${CURR_JOB_FILE}" "${all_in_one}" True ${JOB_CURR_TIME} 2>&1 | tee -a ${CURR_LOG}
-${MSDK}/.github/workflows/scripts/unlock_plot.sh      ${MSDK} "${CURR_JOB_FILE}" "${all_in_one}" True ${JOB_CURR_TIME} 2>&1 | tee -a ${CURR_LOG}
+echo ${MSDK}/.github/workflows/scripts/unlock_plot.sh ${MSDK} "${CURR_JOB_FILE}" "${all_in_one}" True ${JOB_CURR_TIME}
+${MSDK}/.github/workflows/scripts/unlock_plot.sh      ${MSDK} "${CURR_JOB_FILE}" "${all_in_one}" True ${JOB_CURR_TIME}
 
-#----------------------------------------------------------------------------------------------------------------------
-echo "Add files to per.zip"
-if [ -f ${all_in_one} ]; then
-    echo "Add ${all_in_one}"
-    if [[ `wc -c ${all_in_one} | awk '{print $1}'` -gt 0 ]]; then
-        zip ${MSDK}/per.zip ${all_in_one}
-    else
-        echo "Empty file."
-    fi
-fi
-echo
-
-if [ -f ${CURR_LOG} ]; then
-    echo "Add ${CURR_LOG}"
-    if [[ `wc -c ${CURR_LOG} | awk '{print $1}'` -gt 0 ]]; then
-        zip ${MSDK}/per.zip ${CURR_LOG}
-    else
-        echo "Empty file."
-    fi
-fi
-
-echo "::set-env name=all_in_one::"
-echo "::set-env name=CURR_JOB_FILE::"
