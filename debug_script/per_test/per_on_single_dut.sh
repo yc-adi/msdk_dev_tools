@@ -39,29 +39,26 @@ echo
 # Get the configuration
 CONFIG_FILE=~/Workspace/ci_config/RF-PHY-closed.json
 CI_TEST=local_full_per_test
+echo "CI_TEST:" $CI_TEST
+echo
 
 REPO=`python3 -c "import json; import os; obj=json.load(open('${CONFIG_FILE}')); print(obj['tests']['${CI_TEST}']['repo'])"`
-echo "::set-env name=REPO::${REPO}"
 echo "REPO: ${REPO}"
 echo ""
 
 NO_SKIP=`python3 -c "import json; import os; obj=json.load(open('${CONFIG_FILE}')); print(obj['tests']['${CI_TEST}']['no_skip'])"`
-echo "::set-env name=NO_SKIP::${NO_SKIP}"
 echo "NO_SKIP: ${NO_SKIP}"
 echo ""
 
 COMMIT_ID=`python3 -c "import json; import os; obj=json.load(open('${CONFIG_FILE}')); print(obj['tests']['${CI_TEST}']['commit_id'])"`
-echo "::set-env name=COMMIT_ID::${COMMIT_ID}"
 echo "COMMIT_ID: ${COMMIT_ID}"
 echo ""
 
 START_TIME=`python3 -c "import json; import os; obj=json.load(open('${CONFIG_FILE}')); print(obj['tests']['${CI_TEST}']['start_time'])"`
-echo "::set-env name=START_TIME::${START_TIME}"
 echo "START_TIME: ${START_TIME}"
 echo ""
 
 LIMIT=`python3 -c "import json; import os; obj=json.load(open('${CONFIG_FILE}')); print(obj['tests']['${CI_TEST}']['limit'])"`
-echo "::set-env name=LIMIT::${LIMIT}"
 echo "LIMIT: ${LIMIT}"
 echo ""
 
@@ -69,10 +66,6 @@ DO_MAX32655=$(python3     -c "import json; import os; obj=json.load(open('${CONF
 DO_MAX32665=$(python3     -c "import json; import os; obj=json.load(open('${CONFIG_FILE}')); print(obj['tests']['${CI_TEST}']['do_max32665'])")
 DO_MAX32690=$(python3     -c "import json; import os; obj=json.load(open('${CONFIG_FILE}')); print(obj['tests']['${CI_TEST}']['do_max32690'])")
 DO_MAX32690_WLP=$(python3 -c "import json; import os; obj=json.load(open('${CONFIG_FILE}')); print(obj['tests']['${CI_TEST}']['do_max32690_wlp'])")
-echo "::set-env name=DO_MAX32655::${DO_MAX32655}"
-echo "::set-env name=DO_MAX32665::${DO_MAX32665}"
-echo "::set-env name=DO_MAX32690::${DO_MAX32690}"
-echo "::set-env name=DO_MAX32690_WLP::${DO_MAX32690_WLP}"
 echo DO_MAX32655: ${DO_MAX32655}
 echo DO_MAX32665: ${DO_MAX32665}
 echo DO_MAX32690: ${DO_MAX32690}
@@ -83,10 +76,6 @@ MAX32655_PKG_RA=$(python3     -c "import json; import os; obj=json.load(open('${
 MAX32665_PKG_RA=$(python3     -c "import json; import os; obj=json.load(open('${CONFIG_FILE}')); print(obj['tests']['${CI_TEST}']['max32665_pkglen_range'])")
 MAX32690_PKG_RA=$(python3     -c "import json; import os; obj=json.load(open('${CONFIG_FILE}')); print(obj['tests']['${CI_TEST}']['max32690_pkglen_range'])")
 MAX32690_WLP_PKG_RA=$(python3 -c "import json; import os; obj=json.load(open('${CONFIG_FILE}')); print(obj['tests']['${CI_TEST}']['max32690_wlp_pkglen_range'])")
-echo "::set-env name=MAX32655_PKG_RA::${MAX32655_PKG_RA}"
-echo "::set-env name=MAX32665_PKG_RA::${MAX32665_PKG_RA}"
-echo "::set-env name=MAX32690_PKG_RA::${MAX32690_PKG_RA}"
-echo "::set-env name=MAX32690_WLP_PKG_RA::${MAX32690_WLP_PKG_RA}"
 echo MAX32655_PKG_RA: ${MAX32655_PKG_RA}
 echo MAX32665_PKG_RA: ${MAX32665_PKG_RA}
 echo MAX32690_PKG_RA: ${MAX32690_PKG_RA}
@@ -97,10 +86,6 @@ export MAX32655_PHY_RA=$(python3     -c "import json; import os; obj=json.load(o
 export MAX32665_PHY_RA=$(python3     -c "import json; import os; obj=json.load(open('${CONFIG_FILE}')); print(obj['tests']['${CI_TEST}']['max32665_phy_range'])")
 export MAX32690_PHY_RA=$(python3     -c "import json; import os; obj=json.load(open('${CONFIG_FILE}')); print(obj['tests']['${CI_TEST}']['max32690_phy_range'])")
 export MAX32690_WLP_PHY_RA=$(python3 -c "import json; import os; obj=json.load(open('${CONFIG_FILE}')); print(obj['tests']['${CI_TEST}']['max32690_wlp_phy_range'])")
-echo "::set-env name=MAX32655_PHY_RA::${MAX32655_PHY_RA}"
-echo "::set-env name=MAX32665_PHY_RA::${MAX32665_PHY_RA}"
-echo "::set-env name=MAX32690_PHY_RA::${MAX32690_PHY_RA}"
-echo "::set-env name=MAX32690_WLP_PHY_RA::${MAX32690_WLP_PHY_RA}"
 echo MAX32655_PHY_RA: ${MAX32655_PHY_RA}
 echo MAX32665_PHY_RA: ${MAX32665_PHY_RA}
 echo MAX32690_PHY_RA: ${MAX32690_PHY_RA}
@@ -110,11 +95,7 @@ echo
 MAX32655_ATTENS=$(python3     -c "import json; import os; obj=json.load(open('${CONFIG_FILE}')); print(obj['tests']['${CI_TEST}']['max32655_attens'])")
 MAX32665_ATTENS=$(python3     -c "import json; import os; obj=json.load(open('${CONFIG_FILE}')); print(obj['tests']['${CI_TEST}']['max32665_attens'])")
 MAX32690_ATTENS=$(python3     -c "import json; import os; obj=json.load(open('${CONFIG_FILE}')); print(obj['tests']['${CI_TEST}']['max32690_attens'])")
-MAX32690_WLP_ATTENS=$(python3 -c "import json; import os; obj=json.load(open('${CONFIG_FILE}')); print(obj['tests']['${CI_TEST}']['max32690_attens'])")
-echo "::set-env name=MAX32655_ATTENS::${MAX32655_ATTENS}"
-echo "::set-env name=MAX32665_ATTENS::${MAX32665_ATTENS}"
-echo "::set-env name=MAX32690_ATTENS::${MAX32690_ATTENS}"
-echo "::set-env name=MAX32690_ATTENS::${MAX32690_WLP_ATTENS}"
+MAX32690_WLP_ATTENS=$(python3 -c "import json; import os; obj=json.load(open('${CONFIG_FILE}')); print(obj['tests']['${CI_TEST}']['max32690_wlp_attens'])")
 echo MAX32655_ATTENS: ${MAX32655_ATTENS}
 echo MAX32665_ATTENS: ${MAX32665_ATTENS}
 echo MAX32690_ATTENS: ${MAX32690_ATTENS}
@@ -125,21 +106,16 @@ MAX32655_STEP=$(python3     -c "import json; import os; obj=json.load(open('${CO
 MAX32665_STEP=$(python3     -c "import json; import os; obj=json.load(open('${CONFIG_FILE}')); print(obj['tests']['${CI_TEST}']['max32665_step'])")
 MAX32690_STEP=$(python3     -c "import json; import os; obj=json.load(open('${CONFIG_FILE}')); print(obj['tests']['${CI_TEST}']['max32690_step'])")
 MAX32690_WLP_STEP=$(python3 -c "import json; import os; obj=json.load(open('${CONFIG_FILE}')); print(obj['tests']['${CI_TEST}']['max32690_wlp_step'])")
-echo "::set-env name=MAX32655_STEP::${MAX32655_STEP}"
-echo "::set-env name=MAX32665_STEP::${MAX32665_STEP}"
-echo "::set-env name=MAX32690_STEP::${MAX32690_STEP}"
-echo "::set-env name=MAX32690_WLP_STEP::${MAX32690_WLP_STEP}"
 echo MAX32655_STEP: ${MAX32655_STEP}
 echo MAX32665_STEP: ${MAX32665_STEP}
 echo MAX32690_STEP: ${MAX32690_STEP}
 echo MAX32690_WLP_STEP: ${MAX32690_WLP_STEP}
 echo
 
-echo "::set-env name=JOB_CURR_TIME::${JOB_CURR_TIME}"
+echo "JOB_CURR_TIME: ${JOB_CURR_TIME}"
 echo
 
 RETRY=$(python3     -c "import json; import os; obj=json.load(open('${CONFIG_FILE}')); print(obj['tests']['${CI_TEST}']['retry_limit'])")
-echo "::set-env name=RETRY::${RETRY}"
 echo RETRY: ${RETRY}
 echo
 
@@ -242,6 +218,28 @@ if [ "${DO_IT}" == "0" ]; then
     exit 0
 fi
 
+if [ ${CHIP_UC} == "MAX32655" ]; then
+    PKG_RA=${MAX32655_PKG_RA}
+    PHY_RA=${MAX32655_PHY_RA}
+    STEP=${MAX32655_STEP}
+    ATTENS=${MAX32655_ATTENS}
+elif [ ${CHIP_UC} == "MAX32665" ]; then
+    PKG_RA=${MAX32665_PKG_RA}
+    PHY_RA=${MAX32665_PHY_RA}
+    STEP=${MAX32665_STEP}
+    ATTENS=${MAX32665_ATTENS}
+elif [ ${CHIP_UC} == "MAX32690" ] && [ ${BRD_TYPE} == "EvKit_V1" ]; then
+    PKG_RA=${MAX32690_PKG_RA}
+    PHY_RA=${MAX32690_PHY_RA}
+    STEP=${MAX32690_STEP}
+    ATTENS=${MAX32690_ATTENS}
+else
+    PKG_RA=${MAX32690_WLP_PKG_RA}
+    PHY_RA=${MAX32690_WLP_PHY_RA}
+    STEP=${MAX32690_WLP_STEP}
+    ATTENS=${MAX32690_WLP_ATTENS}
+fi
+
 CURR_TIME=$(date +%Y-%m-%d_%H-%M-%S)
 
 CURR_JOB_FILE=~/Workspace/Resource_Share/Logs/local_full_per_test_${CURR_TIME}_${BRD2_CHIP_LC}.txt
@@ -262,12 +260,12 @@ ${MSDK}/Libraries/RF-PHY-closed/.github/workflows/scripts/RF-PHY_board_per_test.
     $(realpath ${CURR_JOB_FILE}) \
     $(realpath ${CURR_LOG})      \
     $(realpath ${all_in_one})    \
-    "${MAX32655_PKG_RA}"         \
-    "${MAX32655_PHY_RA}"         \
-    ${MAX32655_STEP}             \
+    "${PKG_RA}"         \
+    "${PHY_RA}"         \
+    ${STEP}             \
     ${LIMIT}                     \
     ${RETRY}                     \
-    "${MAX32655_ATTENS}"         \
+    "${ATTENS}"         \
     2>&1 | tee -a ${CURR_LOG}
 
 if [[ $? -ne 0 ]]; then

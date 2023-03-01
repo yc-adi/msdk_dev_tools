@@ -14,14 +14,14 @@
 
 echo
 echo "#################################################################################################################"
-echo "# ./local_full_per_test.sh 1_TOTAL_TEST 2_DOWNLOAD                                                                #"
+echo "# ./local_full_per_test.sh 1_TOTAL_TEST 2_DOWNLOAD 3_SHA 4_CHANGE_REPO                                                               #"
 echo "#################################################################################################################"
 echo
 echo $0 $@
 echo "Input argument number: $#"
 echo
 
-if [ $# -ne 2 ]; then
+if [ $# -ne 4 ]; then
     echo "invalid arguments"
     exit 1
 fi
@@ -31,12 +31,63 @@ DOWNLOAD=$2
 
 echo "TOTAL_TEST:" $TOTAL_TEST
 echo "  DONWLOAD:" $DOWNLOAD
-echo
+echo $3
+MANIPULATE_REPO=$4
+echo "MANIPULATE_REPO": $4
+
+#-------------------------------------------------------------------------------------------------------------------
+if [ "$MANIPULATE_REPO" == "1" ]; then
+    echo "For ME18 WLP debug"
+
+    set -x
+
+    test_dir=`pwd`
+    echo $test_dir
+
+    rm ~/temp_safe_to_del/msdk/*.elf
+
+    rm -rf ~/temp_safe_to_del/msdk/.github
+    rm -rf ~/temp_safe_to_del/msdk/Tools/Bluetooth
+    rm -rf ~/temp_safe_to_del/msdk/Libraries/RF-PHY-closed/.github
+
+    cd ~/temp_safe_to_del/msdk
+
+    rm -rf Libraries/BlePhy
+    echo
+    rm -rf Examples/MAX32690/BLE5_ctr
+    echo
+
+    git checkout -- .
+
+    git checkout main 1>/dev/null
+    git checkout -- .
+    echo
+
+    git checkout $3
+    git status
+    git checkout -- .
+    git status
+    echo
+
+    rm -rf ~/temp_safe_to_del/msdk/.github
+    rm -rf ~/temp_safe_to_del/msdk/Tools/Bluetooth
+    rm -rf ~/temp_safe_to_del/msdk/Libraries/RF-PHY-closed/.github
+
+    cp -rp ~/temp_safe_to_del/saved/Bluetooth ~/temp_safe_to_del/msdk/Tools/
+    cp -rp ~/temp_safe_to_del/saved/github    ~/temp_safe_to_del/msdk/.github/
+    cp -rp ~/temp_safe_to_del/saved/RF_github ~/temp_safe_to_del/msdk/Libraries/RF-PHY-closed/.github/
+
+    sed -i "s/TRACE = 0/TRACE = 2/g" ~/temp_safe_to_del/msdk/Examples/MAX32690/BLE5_ctr/project.mk || true
+
+    cd $test_dir
+
+    set +x
+fi
 
 # per_on_single_dut.sh 1CHIP_UC 2BRD_TYPE 3DOWNLOAD 4JOB_TIME
 
 declare -A DUTs
-DUT_num=2
+DUT_num=4
 DUTs[0,0]=MAX32655
 DUTs[0,1]=EvKit_V1
 DUTs[1,0]=MAX32665
@@ -63,7 +114,7 @@ do
     echo $JOB_CURR_TIME >> $WHAT_TESTED
     echo
 
-    for ((i=1; i<DUT_num; i++))
+    for ((i=3; i<DUT_num; i++))
     do
         CHIP_UC=${DUTs[$i,0]}
         BRD_TYPE=${DUTs[$i,1]}

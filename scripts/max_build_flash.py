@@ -8,6 +8,8 @@ Example:
     ./max_build_flash.py --msdk ~/Workspace/msdk_open --openocd ~/Tools/openocd --board max32655_board_y1 --project BLE5_ctr --build --flash
 
     ./max_build_flash.py --msdk ~/Workspace/msdk_open --openocd ~/Tools/openocd --board max32690_board_3 --project Hello_World --build --flash
+
+    ./max_build_flash.py --msdk ~/Workspace/yc/msdk_open --openocd ~/Tools/openocd --board max32690_board_A1 --project BLE5_ctr --build --flash
 """
 
 from argparse import ArgumentParser
