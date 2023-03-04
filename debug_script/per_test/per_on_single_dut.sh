@@ -123,11 +123,17 @@ echo
 TEST_ROOT=`realpath ~/temp_safe_to_del`
 
 if [ "${DOWNLOAD,,}" == "true" ]; then
-    bash -x -c "rm -rf ${TEST_ROOT}"
+    bash -x -c "rm -rf ${TEST_ROOT}/msdk"
     bash -x -c "mkdir -p ${TEST_ROOT}"
-    bash -x -c "cd ${TEST_ROOT}"
+    cd ${TEST_ROOT}
 
-    bash -x -c "git clone ${REPO} msdk"
+    if [ "x${REPO}" == "x" ]; then
+	    REPO=git@github.com:yc-adi/msdk_open.git
+    fi
+
+    git clone ${REPO} ${TEST_ROOT}/msdk
+    cd ${TEST_ROOT}/msdk
+    git checkout dev-rf-phy-per
 else
     echo "Keep using the current contents in the folder: ${TEST_ROOT}"
     bash -x -c "rm ${MSDK}/msdk/*.zip"
@@ -167,6 +173,12 @@ echo
 #cp -rp ~/Workspace/temp/msdk-me18/.github/ .github/
 echo ""
 
+#----------------------------------------------------------------------------------------------------------------------
+# prepare RF-PHY-closed
+if [ ! -d ~/temp_safe_to_del/msdk/Libraries/RF-PHY-closed ]; then
+    cd ~/temp_safe_to_del/msdk/Libraries
+    git clone git@github.com:yc-adi/RF-PHY-closed-yc RF-PHY-closed
+fi
 # This will be used to search the test used in the configuration json file.
 cd ${TEST_ROOT}
 echo PWD: `pwd`
@@ -242,11 +254,11 @@ fi
 
 CURR_TIME=$(date +%Y-%m-%d_%H-%M-%S)
 
-CURR_JOB_FILE=~/Workspace/Resource_Share/Logs/local_full_per_test_${CURR_TIME}_${BRD2_CHIP_LC}.txt
-     CURR_LOG=~/Workspace/Resource_Share/Logs/local_full_per_test_${CURR_TIME}_${BRD2_CHIP_LC}.log
+CURR_JOB_FILE=~/Workspace/Resource_Share/Logs/local-full-per-test-${CURR_TIME}_${BRD2_CHIP_LC}.txt
+     CURR_LOG=~/Workspace/Resource_Share/Logs/local-full-per-test-${CURR_TIME}_${BRD2_CHIP_LC}.log
 
 RESULT_PATH=~/Workspace/ci_results/per
-res=${RESULT_PATH}/local_full_per_test_${CURR_TIME}
+res=${RESULT_PATH}/local-full-per-test-${CURR_TIME}
 all_in_one=${res}_${BRD2_CHIP_LC}_${BRD2_TYPE}.csv
 echo "all_in_one:" $all_in_one
 echo
@@ -265,7 +277,8 @@ ${MSDK}/Libraries/RF-PHY-closed/.github/workflows/scripts/RF-PHY_board_per_test.
     ${STEP}             \
     ${LIMIT}                     \
     ${RETRY}                     \
-    "${ATTENS}"         \
+    "${ATTENS}"                  \
+    "${CI_TEST}"
     2>&1 | tee -a ${CURR_LOG}
 
 if [[ $? -ne 0 ]]; then
