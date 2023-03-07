@@ -117,7 +117,7 @@ def main(args: dict):
 
     inputs = validate_args(args)
     
-    ret = run_file("build_flash.sh", inputs)
+    ret = run_file(os.path.expanduser("~/Workspace/msdk_dev_tools/scripts/build_flash.sh"), inputs)
 
     if ret in ERR_CODE.keys():
         print(f'Return: {ERR_CODE[ret]}')
