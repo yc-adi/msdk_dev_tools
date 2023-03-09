@@ -177,7 +177,7 @@ while True:
         hciSlave.advFunc(Namespace(interval="60", stats="False", connect="True", maintain=False, listen="False"))
 
         print("\nStart connection.")
-        hciMaster.initFunc(Namespace(interval="6", timeout="64", addr=txAddr, stats="False", maintain=False, listen="False"))
+        hciMaster.initFunc(Namespace(interval="18", timeout="200", addr=txAddr, stats="False", maintain=False, listen="False"))
         sleep(0.2)
 
         print(f'\n{dt.now()} ---- sleep 60 secs')
