@@ -150,7 +150,7 @@ perMax = 0
 RETRY = int(args.retry_limit)
 need_to_setup = True  # only do it at the beginning or after flash
 
-need_to_setup = True
+cycle_cnt = 0
 while True:
     if need_to_setup:
         start_secs = time.time()
@@ -180,12 +180,14 @@ while True:
         hciMaster.initFunc(Namespace(interval="18", timeout="200", addr=txAddr, stats="False", maintain=False, listen="False"))
         sleep(0.2)
 
-        print(f'\n{dt.now()} ---- sleep 60 secs')
-        sleep(10)
-        #print(f'\n{dt.now()} ---- read remote feature')
-        #hciMaster.cmdFunc(Namespace(cmd="011620020000"))
-        sleep(50)
-        print(f'{dt.now()} ---- end sleep')
+        for i in range(20):
+            print(f'\n{dt.now()} ---- sleep 10 secs')
+            sleep(10)
+            print(f'{dt.now()} ---- end sleep\n')
+            print(f'{dt.now()} reset. {i + 1}')
+            hciSlave.cmdFunc(Namespace(cmd="01080C020000"))
+            sleep(0.5)
+        
         print("\nReset the devices at the beginning of the test or after flash the board again.")
         hciSlave.resetFunc(None)
         hciMaster.resetFunc(None)
@@ -220,15 +222,12 @@ while True:
         print("\nslave listenFunc, 1 sec")
         hciSlave.listenFunc(Namespace(time=1, stats="False"))
 
-        #break
-
         print("\nSlave and master sendAclFunc, slave listenFunc")
         hciSlave.sendAclFunc(Namespace(packetLen=str(packetLen), numPackets=str(0)))
         hciMaster.sendAclFunc(Namespace(packetLen=str(packetLen), numPackets=str(0)))
         hciSlave.listenFunc(Namespace(time=1, stats="False"))
         hciMaster.listenFunc(Namespace(time=1, stats="False"))
 
-        #break
 
     start_secs = time.time()
 
@@ -271,8 +270,14 @@ while True:
     print("perMaster  : ", perMaster)
     print("perSlave   : ", perSlave)
 
-    break
+    print(f"close the connection, cycle_cnt: {cycle_cnt}")
+    #hciMaster.cmdFunc(Namespace(cmd="01060403000013"))
+    print("\n\n\n")
+    sleep(2)
 
+    cycle_cnt += 1
+    if cycle_cnt >= 10:
+        break
 
 print('--------------------------------------------------------------------------------------------')
 

@@ -90,23 +90,9 @@ combination of parameters.
 
 # Parse the command line arguments
 parser = argparse.ArgumentParser(description=descText, formatter_class=RawTextHelpFormatter)
-parser.add_argument('--slv_hci',help='Serial port for slave device')
 parser.add_argument('--mst_hci',help='Serial port for master device')
-parser.add_argument('--results',help='CSV files to store the results')
-parser.add_argument('-d', '--delay', default=5,help='Number of seconds to wait before ending the test')
-parser.add_argument('-l', '--limit', default=0,help='PER limit for return value')
-parser.add_argument('-p', '--phys', default="1",help='PHYs to test with, comma separated list with 1-4.')
-parser.add_argument('-t', '--txpows', default="0",help='TX powers to test with, comma separated list.')
-parser.add_argument('-a', '--attens', help='Attenuation settings to use, comma separated list.')
-parser.add_argument('-s', '--step', default=10, help='Attenuation sweep step size in dBm.')
-parser.add_argument('-e', '--pktlen', default="250", help="packet length, comma separated list.")
-parser.add_argument('--mst_con', default="", help="master TRACE serial port")
-parser.add_argument('--slv_con', default="", help="slave TRACE serial port")
-parser.add_argument('--loss', default=0, help="Calibrated path loss, -15.7 dBm (-16.4+0.7)")
-parser.add_argument('--brd1_reset', default="", help="script file to reset board1")
-parser.add_argument('--brd2_reset', default="", help="script file to reset board2")
-parser.add_argument('--retry_limit', default=3, help="limit of retry times after fail")
-parser.add_argument('--short', action='store_true', help="shorter test")
+parser.add_argument('--slv_hci',help='Serial port for slave device')
+parser.add_argument('--slv_con',help='Serial port for slave TRACE info')
 
 args = parser.parse_args()
 
@@ -121,49 +107,32 @@ packetLen        = 0
 phy              = 1
 txPower          = 0
 
-print("slaveSerial   :", args.slv_hci)
 print("masterSerial  :", args.mst_hci)
-print("slave TRACE   :", args.slv_con)
-print("master TRACE  :", args.mst_con)
-print("results       :", args.results)
-print("delay         :", args.delay)
-print("packetLengths :", packetLengths)
-print("phys          :", phys)
-print("txPowers      :", txPowers)
-print("PER limit     :", args.limit)
 
-print(f'{dt.now()} ---- sleep 2 secs')
+print(f'{dt.now()} ---- Sleep 5 secs. Cycle the power of the ME18')
+sleep(3)
+#hciSlv = BLE_hci(Namespace(serialPort=args.slv_hci, monPort=args.slv_con, baud=115200, id=2))
 sleep(2)
-print("\nReset the attenuation to 30.")
-if rf_switch:
-    set_val = 30 + float(args.loss)
-    #mini_RCDAT = mini_RCDAT_USB(Namespace(atten=set_val))
-sleep(0.1)
 print(f'{dt.now()} ---- end sleep')
 
 # Create the BLE_hci objects
-hciSlave  = BLE_hci(Namespace(serialPort=args.slv_hci, monPort=args.slv_con, baud=115200, id=2))
-hciMaster = BLE_hci(Namespace(serialPort=args.mst_hci, monPort=args.mst_con, baud=115200, id=1))
+hciMaster = BLE_hci(Namespace(serialPort=args.mst_hci, monPort="", baud=115200, id=1))
 
 ABORTED = False
 perMax = 0
-RETRY = int(args.retry_limit)
 need_to_setup = True  # only do it at the beginning or after flash
 
-need_to_setup = True
 while True:
     if need_to_setup:
         start_secs = time.time()
 
         print("\nSet addresses.")
-        txAddr = "11:22:33:44:55:02"
         rxAddr = "11:22:33:44:55:01"
-        hciSlave.addrFunc(Namespace(addr=txAddr))
+        txAddr = "00:18:80:B3:87:CC"
         hciMaster.addrFunc(Namespace(addr=rxAddr))
         sleep(1)
 
         print("\nReset the devices at the beginning of the test or after flash the board again.")
-        hciSlave.resetFunc(None)
         hciMaster.resetFunc(None)
         sleep(1)
 
@@ -171,23 +140,18 @@ while True:
         print("pre-test setup")
         print("----------------------------------")
 
-        hciSlave.cmdFunc(Namespace(cmd="01242004FB004808"), timeout=10.0)
-
-        print("\nStart advertising.")
-        hciSlave.advFunc(Namespace(interval="60", stats="False", connect="True", maintain=False, listen="False"))
-
         print("\nStart connection.")
         hciMaster.initFunc(Namespace(interval="18", timeout="200", addr=txAddr, stats="False", maintain=False, listen="False"))
         sleep(0.2)
 
-        print(f'\n{dt.now()} ---- sleep 60 secs')
-        sleep(10)
-        #print(f'\n{dt.now()} ---- read remote feature')
-        #hciMaster.cmdFunc(Namespace(cmd="011620020000"))
-        sleep(50)
+        print(f'\n{dt.now()} ---- sleep 20 secs')
+        sleep(20)
         print(f'{dt.now()} ---- end sleep')
+
+        #print(f'Close connection')
+        #hciMaster.cmdFunc(Namespace(cmd="01060403000013"))
+
         print("\nReset the devices at the beginning of the test or after flash the board again.")
-        hciSlave.resetFunc(None)
         hciMaster.resetFunc(None)
         sys.exit(0)
 
@@ -237,19 +201,14 @@ while True:
     print('---------------------------')
 
     print(f"\nSet the requested attenuation: {20}.")
-    if rf_switch:
-        set_val = 20 + float(args.loss)
-        #mini_RCDAT = mini_RCDAT_USB(Namespace(atten=set_val))
 
     print("\nSleep 1 second")
     sleep(1)
 
     print("\nReset the packet stats.")
-    hciSlave.cmdFunc(Namespace(cmd="0102FF00"), timeout=10.0)
     hciMaster.cmdFunc(Namespace(cmd="0102FF00"), timeout=10.0)
 
     print("\nSlave listenFunc")
-    hciSlave.listenFunc(Namespace(time=1, stats="False"))
     print(f'used {(time.time() - start_secs):.0f} secs.')
 
     print("\nMaster listenFunc")
@@ -259,17 +218,14 @@ while True:
     sleep(int(args.delay))
 
     print("\nRead any pending events. slave and master listenFunc")
-    hciSlave.listenFunc(Namespace(time=1, stats="False"))
     hciMaster.listenFunc(Namespace(time=1, stats="False"))
 
     print("\nMaster collects results.")
     perMaster = hciMaster.connStatsFunc(None)
 
     print("\nSlave collects results.")
-    perSlave = hciSlave.connStatsFunc(None)
 
     print("perMaster  : ", perMaster)
-    print("perSlave   : ", perSlave)
 
     break
 
@@ -283,6 +239,5 @@ print(f'{dt.now()} ---- end sleep')
 
 
 print("Reset the devices.")
-hciSlave.resetFunc(None)
 hciMaster.resetFunc(None)
 sleep(0.1)
