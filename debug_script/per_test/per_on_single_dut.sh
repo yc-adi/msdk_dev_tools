@@ -92,6 +92,16 @@ echo MAX32690_PHY_RA: ${MAX32690_PHY_RA}
 echo MAX32690_WLP_PHY_RA: ${MAX32690_WLP_PHY_RA}
 echo
 
+MAX32655_MIN_PWRS=$(python3     -c "import json; import os; obj=json.load(open('${CONFIG_FILE}')); print(obj['tests']['${CI_TEST}']['max32655_min_pwrs'])")
+MAX32665_MIN_PWRS=$(python3     -c "import json; import os; obj=json.load(open('${CONFIG_FILE}')); print(obj['tests']['${CI_TEST}']['max32665_min_pwrs'])")
+MAX32690_MIN_PWRS=$(python3     -c "import json; import os; obj=json.load(open('${CONFIG_FILE}')); print(obj['tests']['${CI_TEST}']['max32690_min_pwrs'])")
+MAX32690_WLP_MIN_PWRS=$(python3 -c "import json; import os; obj=json.load(open('${CONFIG_FILE}')); print(obj['tests']['${CI_TEST}']['max32690_wlp_min_pwrs'])")
+echo MAX32655_MIN_PWRS: ${MAX32655_MIN_PWRS}
+echo MAX32665_MIN_PWRS: ${MAX32665_MIN_PWRS}
+echo MAX32690_MIN_PWRS: ${MAX32690_MIN_PWRS}
+echo MAX32690_WLP_MIN_PWRS: ${MAX32690_WLP_MIN_PWRS}
+echo 
+
 MAX32655_ATTENS=$(python3     -c "import json; import os; obj=json.load(open('${CONFIG_FILE}')); print(obj['tests']['${CI_TEST}']['max32655_attens'])")
 MAX32665_ATTENS=$(python3     -c "import json; import os; obj=json.load(open('${CONFIG_FILE}')); print(obj['tests']['${CI_TEST}']['max32665_attens'])")
 MAX32690_ATTENS=$(python3     -c "import json; import os; obj=json.load(open('${CONFIG_FILE}')); print(obj['tests']['${CI_TEST}']['max32690_attens'])")
@@ -233,21 +243,25 @@ fi
 if [ ${CHIP_UC} == "MAX32655" ]; then
     PKG_RA=${MAX32655_PKG_RA}
     PHY_RA=${MAX32655_PHY_RA}
+    MIN_PWRS=${MAX32655_MIN_PWRS}
     STEP=${MAX32655_STEP}
     ATTENS=${MAX32655_ATTENS}
 elif [ ${CHIP_UC} == "MAX32665" ]; then
     PKG_RA=${MAX32665_PKG_RA}
     PHY_RA=${MAX32665_PHY_RA}
+    MIN_PWRS=${MAX32665_MIN_PWRS}
     STEP=${MAX32665_STEP}
     ATTENS=${MAX32665_ATTENS}
 elif [ ${CHIP_UC} == "MAX32690" ] && [ ${BRD_TYPE} == "EvKit_V1" ]; then
     PKG_RA=${MAX32690_PKG_RA}
     PHY_RA=${MAX32690_PHY_RA}
+    MIN_PWRS=${MAX32690_MIN_PWRS}
     STEP=${MAX32690_STEP}
     ATTENS=${MAX32690_ATTENS}
 else
     PKG_RA=${MAX32690_WLP_PKG_RA}
     PHY_RA=${MAX32690_WLP_PHY_RA}
+    MIN_PWRS=${MAX32690_WLP_MIN_PWRS}
     STEP=${MAX32690_WLP_STEP}
     ATTENS=${MAX32690_WLP_ATTENS}
 fi
@@ -278,7 +292,8 @@ ${MSDK}/Libraries/RF-PHY-closed/.github/workflows/scripts/RF-PHY_board_per_test.
     ${LIMIT}                     \
     ${RETRY}                     \
     "${ATTENS}"                  \
-    "${CI_TEST}"
+    "${CI_TEST}"                 \
+    "${MIN_PWRS}"
     2>&1 | tee -a ${CURR_LOG}
 
 if [[ $? -ne 0 ]]; then
