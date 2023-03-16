@@ -92,6 +92,16 @@ echo MAX32690_PHY_RA: ${MAX32690_PHY_RA}
 echo MAX32690_WLP_PHY_RA: ${MAX32690_WLP_PHY_RA}
 echo
 
+MAX32655_MIN_PWRS=$(python3     -c "import json; import os; obj=json.load(open('${CONFIG_FILE}')); print(obj['tests']['${CI_TEST}']['max32655_min_pwrs'])")
+MAX32665_MIN_PWRS=$(python3     -c "import json; import os; obj=json.load(open('${CONFIG_FILE}')); print(obj['tests']['${CI_TEST}']['max32665_min_pwrs'])")
+MAX32690_MIN_PWRS=$(python3     -c "import json; import os; obj=json.load(open('${CONFIG_FILE}')); print(obj['tests']['${CI_TEST}']['max32690_min_pwrs'])")
+MAX32690_WLP_MIN_PWRS=$(python3 -c "import json; import os; obj=json.load(open('${CONFIG_FILE}')); print(obj['tests']['${CI_TEST}']['max32690_wlp_min_pwrs'])")
+echo MAX32655_MIN_PWRS: ${MAX32655_MIN_PWRS}
+echo MAX32665_MIN_PWRS: ${MAX32665_MIN_PWRS}
+echo MAX32690_MIN_PWRS: ${MAX32690_MIN_PWRS}
+echo MAX32690_WLP_MIN_PWRS: ${MAX32690_WLP_MIN_PWRS}
+echo 
+
 MAX32655_ATTENS=$(python3     -c "import json; import os; obj=json.load(open('${CONFIG_FILE}')); print(obj['tests']['${CI_TEST}']['max32655_attens'])")
 MAX32665_ATTENS=$(python3     -c "import json; import os; obj=json.load(open('${CONFIG_FILE}')); print(obj['tests']['${CI_TEST}']['max32665_attens'])")
 MAX32690_ATTENS=$(python3     -c "import json; import os; obj=json.load(open('${CONFIG_FILE}')); print(obj['tests']['${CI_TEST}']['max32690_attens'])")
@@ -123,11 +133,17 @@ echo
 TEST_ROOT=`realpath ~/temp_safe_to_del`
 
 if [ "${DOWNLOAD,,}" == "true" ]; then
-    bash -x -c "rm -rf ${TEST_ROOT}"
+    bash -x -c "rm -rf ${TEST_ROOT}/msdk"
     bash -x -c "mkdir -p ${TEST_ROOT}"
-    bash -x -c "cd ${TEST_ROOT}"
+    cd ${TEST_ROOT}
 
-    bash -x -c "git clone ${REPO} msdk"
+    if [ "x${REPO}" == "x" ]; then
+	    REPO=git@github.com:yc-adi/msdk_open.git
+    fi
+
+    git clone ${REPO} ${TEST_ROOT}/msdk
+    cd ${TEST_ROOT}/msdk
+    git checkout dev-rf-phy-per
 else
     echo "Keep using the current contents in the folder: ${TEST_ROOT}"
     bash -x -c "rm ${MSDK}/msdk/*.zip"
@@ -167,6 +183,12 @@ echo
 #cp -rp ~/Workspace/temp/msdk-me18/.github/ .github/
 echo ""
 
+#----------------------------------------------------------------------------------------------------------------------
+# prepare RF-PHY-closed
+if [ ! -d ~/temp_safe_to_del/msdk/Libraries/RF-PHY-closed ]; then
+    cd ~/temp_safe_to_del/msdk/Libraries
+    git clone git@github.com:yc-adi/RF-PHY-closed-yc RF-PHY-closed
+fi
 # This will be used to search the test used in the configuration json file.
 cd ${TEST_ROOT}
 echo PWD: `pwd`
@@ -221,32 +243,36 @@ fi
 if [ ${CHIP_UC} == "MAX32655" ]; then
     PKG_RA=${MAX32655_PKG_RA}
     PHY_RA=${MAX32655_PHY_RA}
+    MIN_PWRS=${MAX32655_MIN_PWRS}
     STEP=${MAX32655_STEP}
     ATTENS=${MAX32655_ATTENS}
 elif [ ${CHIP_UC} == "MAX32665" ]; then
     PKG_RA=${MAX32665_PKG_RA}
     PHY_RA=${MAX32665_PHY_RA}
+    MIN_PWRS=${MAX32665_MIN_PWRS}
     STEP=${MAX32665_STEP}
     ATTENS=${MAX32665_ATTENS}
 elif [ ${CHIP_UC} == "MAX32690" ] && [ ${BRD_TYPE} == "EvKit_V1" ]; then
     PKG_RA=${MAX32690_PKG_RA}
     PHY_RA=${MAX32690_PHY_RA}
+    MIN_PWRS=${MAX32690_MIN_PWRS}
     STEP=${MAX32690_STEP}
     ATTENS=${MAX32690_ATTENS}
 else
     PKG_RA=${MAX32690_WLP_PKG_RA}
     PHY_RA=${MAX32690_WLP_PHY_RA}
+    MIN_PWRS=${MAX32690_WLP_MIN_PWRS}
     STEP=${MAX32690_WLP_STEP}
     ATTENS=${MAX32690_WLP_ATTENS}
 fi
 
 CURR_TIME=$(date +%Y-%m-%d_%H-%M-%S)
 
-CURR_JOB_FILE=~/Workspace/Resource_Share/Logs/local_full_per_test_${CURR_TIME}_${BRD2_CHIP_LC}.txt
-     CURR_LOG=~/Workspace/Resource_Share/Logs/local_full_per_test_${CURR_TIME}_${BRD2_CHIP_LC}.log
+CURR_JOB_FILE=~/Workspace/Resource_Share/Logs/local-full-per-test-${CURR_TIME}_${BRD2_CHIP_LC}.txt
+     CURR_LOG=~/Workspace/Resource_Share/Logs/local-full-per-test-${CURR_TIME}_${BRD2_CHIP_LC}.log
 
 RESULT_PATH=~/Workspace/ci_results/per
-res=${RESULT_PATH}/local_full_per_test_${CURR_TIME}
+res=${RESULT_PATH}/local-full-per-test-${CURR_TIME}
 all_in_one=${res}_${BRD2_CHIP_LC}_${BRD2_TYPE}.csv
 echo "all_in_one:" $all_in_one
 echo
@@ -265,7 +291,9 @@ ${MSDK}/Libraries/RF-PHY-closed/.github/workflows/scripts/RF-PHY_board_per_test.
     ${STEP}             \
     ${LIMIT}                     \
     ${RETRY}                     \
-    "${ATTENS}"         \
+    "${ATTENS}"                  \
+    "${CI_TEST}"                 \
+    "${MIN_PWRS}"
     2>&1 | tee -a ${CURR_LOG}
 
 if [[ $? -ne 0 ]]; then
