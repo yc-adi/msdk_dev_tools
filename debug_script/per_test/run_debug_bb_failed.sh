@@ -30,7 +30,7 @@ function test_me17
 function test_me18
 {
     # On Ying's Ubuntu
-    # nRF52840_2 and max32690_board_A5
+    # nRF52840_2 and max32690_board_a3
     #"DAP_sn": "1050288497"
     #
     # ~/Workspace/msdk_dev_tools/scripts/max_build_flash.py --msdk ~/Workspace/msdk_open --openocd ~/Tools/openocd --board max32690_board_3 --project BLE5_ctr --build --flash
@@ -41,8 +41,11 @@ function test_me18
     brd2_con="/dev/serial/by-id/usb-FTDI_FT231X_USB_UART_D30ALJPW-if00-port0"
 
     cd ~/Workspace/msdk_dev_tools/debug_script/per_test
-    echo "unbuffer ./debug_bb_failed.py --mst_hci ${brd1_hci} --slv_hci ${brd2_hci} --slv_con ${brd2_con}"
-    unbuffer ./debug_bb_failed.py --mst_hci ${brd1_hci} --slv_hci ${brd2_hci} --slv_con ${brd2_con}
+    #echo "unbuffer ./debug_bb_failed.py --mst_hci ${brd1_hci} --slv_hci ${brd2_hci} --slv_con ${brd2_con}"
+    #unbuffer ./debug_bb_failed.py --mst_hci ${brd1_hci} --slv_hci ${brd2_hci} --slv_con ${brd2_con}
+
+    echo "unbuffer ./test_me18.py --mst_hci ${brd1_hci} --slv_hci ${brd2_hci} --slv_con ${brd2_con}"
+    unbuffer ././test_me18.py --mst_hci ${brd1_hci} --slv_hci ${brd2_hci} --slv_con ${brd2_con} 2>&1 | tee test_me18.log 
 }
 
 function test_me18_no_con
@@ -78,7 +81,7 @@ function ver_me18
 
     cd ~/Workspace/msdk_dev_tools/debug_script/per_test
     echo "unbuffer ./bb_failed_verify.py --mst_hci ${brd1_hci} --slv_hci ${brd2_hci} --slv_con ${brd2_con}"
-    unbuffer ./bb_failed_verify.py --mst_hci ${brd1_hci} --slv_hci ${brd2_hci} --slv_con ${brd2_con}
+    unbuffer ./bb_failed_verify.py --mst_hci ${brd1_hci} --slv_hci ${brd2_hci} --slv_con ${brd2_con} 2>&1 | tee me18_ref.log
 }
 
 
@@ -97,8 +100,8 @@ function test_me18_wlp
     brd2_con="/dev/serial/by-id/usb-FTDI_FT231X_USB_UART_D30ALWEN-if00-port0"
 
     cd ~/Workspace/msdk_dev_tools/debug_script/per_test
-    echo "unbuffer ./debug_bb_failed.py --mst_hci ${brd1_hci} --slv_hci ${brd2_hci} --slv_con ${brd2_con}"
-    unbuffer ./debug_bb_failed.py --mst_hci ${brd1_hci} --slv_hci ${brd2_hci} --slv_con ${brd2_con}
+    echo "unbuffer ./test_me18_wlp.py --mst_hci ${brd1_hci} --slv_hci ${brd2_hci} --slv_con ${brd2_con} 2>&1 | tee test_me18_wlp.log"
+    unbuffer ./test_me18_wlp.py --mst_hci ${brd1_hci} --slv_hci ${brd2_hci} --slv_con ${brd2_con}  2>&1 | tee test_me18_wlp.log
 }
 
 
@@ -212,7 +215,8 @@ function build_flash_test
 
 #test_me14
 #test_me17
-test_me18
+#test_me18
+test_me18_wlp
 #test_me17_me18
 #test_me17_me18-wlp
 #ver_me18

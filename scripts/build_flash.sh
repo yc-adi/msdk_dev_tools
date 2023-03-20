@@ -13,11 +13,13 @@ echo
 MSDK=$1
 OPENOCD=$2
 TARGET=$3
-echo TARGET=${TARGET}
+echo "    TARGET:" ${TARGET}
 TARGET_LC=`echo $TARGET | tr '[:upper:]' '[:lower:]'`
-echo TARGET_LC=${TARGET_LC}
+echo " TARGET_LC:" ${TARGET_LC}
 BOARD_TYPE=$4
+echo "BOARD_TYPE:" ${BOARD_TYPE}
 PROJECT=$5
+echo "   PROJECT:" ${PROJECT}
 PORT=$6
 BUILD=$7
 FLASH=$8
@@ -28,17 +30,24 @@ function build()
 {
     echo "-----------------------------------------------------------------------------------------"
     echo "Build the project."
+    echo "-----------------------------------------------------------------------------------------"
     echo
 
     cd $MSDK/Examples/$TARGET/$PROJECT
     echo PWD=`pwd`
+    bash -x -c "ls -d .*/ $MSDK/Examples/$TARGET/$PROJECT"
     echo 
 
     set -e
     set -x
 
     make MAXIM_PATH=$MSDK distclean
-    make -j8 MAXIM_PATH=$MSDK TARGET=$TARGET BOARD=$BOARD_TYPE
+    echo
+
+    ls -d .*/ $MSDK/Examples/$TARGET/$PROJECT
+    echo
+
+    make -j1 MAXIM_PATH=$MSDK TARGET=$TARGET BOARD=$BOARD_TYPE
 
     set +x
     set +e
@@ -49,6 +58,7 @@ function flash_boards()
 {
     echo "-----------------------------------------------------------------------------------------"
     echo "Flash the ELF to the board."
+    echo "-----------------------------------------------------------------------------------------"
     echo
 
     cd $MSDK/Examples/$TARGET/$PROJECT

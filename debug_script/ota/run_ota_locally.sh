@@ -13,7 +13,7 @@ dut_serial=$(/usr/bin/python3 -c "import sys, json; print(json.load(open('$FILE'
 echo "  dut_uart:" ${dut_uart}
 echo "dut_serial:" ${dut_serial}
 
-#./test_launcher.sh max32655 $dut_uart $dut_serial "ota" "" "BLE_FreeRTOS_OTAS" 2>&1 | tee test_freertos_otas.log
-./test_launcher.sh max32655 $dut_uart $dut_serial "ota" "" "BLE_otas" 2>&1 | tee test_otas.log
+./test_launcher.sh max32655 $dut_uart $dut_serial "ota" "" "BLE_FreeRTOS_OTAS" 2>&1 | tee ~/Workspace/msdk_dev_tools/debug_script/ota/test_freertos_otas.log
 
+#./test_launcher.sh max32655 $dut_uart $dut_serial "ota" "" "BLE_otas" 2>&1 | tee ~/Workspace/msdk_dev_tools/debug_script/ota/test_otas.log
 
