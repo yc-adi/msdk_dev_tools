@@ -6,6 +6,7 @@ DAP_SERIAL=044417016bd8439a00000000000000000000000097969906
 OPENOCD=/home/$USER/MaximSDK/Tools/OpenOCD
 OPENOCD_EXE=${OPENOCD}/openocd
 GDB_DIR=~/MaximSDK/Tools/GNUTools/10.3/bin
+PROJECT=BLE_FreeRTS_OTA
 
 #--------------------------------------------------------------------------------------------------
 function erase_flash
@@ -26,12 +27,12 @@ function erase_flash
 
 function build_flash_otas
 {
-    # build BLE_FreeRTOS_OTAS
-    cd ${MSDK}/Examples/MAX32655/BLE_FreeRTOS_OTAS
+    # build BLE_FreeRTOS_OTA
+    cd ${MSDK}/Examples/MAX32655/${BLE_FreeRTOS_OTA}
     #make MAXIM_PATH=${MSDK} distclean
     #make MAXIM_PATH=${MSDK} BOARD=EvKit_V1 USE_INTERNAL_FLASH=1 -j8
 
-    printf "\n>>>>>> flash BLE_FreeRTOS_OTAS\n\n"
+    printf "\n>>>>>> flash ${BLE_FreeRTOS_OTA}\n\n"
 
     ${OPENOCD_EXE}                                      \
         -s ${OPENOCD}/scripts                           \
@@ -48,7 +49,7 @@ function build_flash_otas
 function verify_otas
 {
     printf "\n>>>>>> verify otas image\n\n"
-    cd ${MSDK}/Examples/MAX32655/BLE_FreeRTOS_OTAS
+    cd ${MSDK}/Examples/MAX32655/${BLE_FreeRTOS_OTA}
     ${OPENOCD_EXE}                                      \
         -s ${OPENOCD}/scripts                           \
         -f ${OPENOCD}/scripts/interface/cmsis-dap.cfg   \
@@ -102,16 +103,16 @@ function verify_bootloader
 
 function build_flash_otas_by_gdb
 {
-    printf "\n>>>>>> build BLE_FreeRTOS_OTAS\n\n"
-    cd ${MSDK}/Examples/MAX32655/BLE_FreeRTOS_OTAS
+    printf "\n>>>>>> build ${BLE_FreeRTOS_OTA}\n\n"
+    cd ${MSDK}/Examples/MAX32655/${BLE_FreeRTOS_OTA}
     make MAXIM_PATH=${MSDK} distclean
     make MAXIM_PATH=${MSDK} BOARD=EvKit_V1 USE_INTERNAL_FLASH=1 -j8
 
-    printf "\n>>>>>> flash BLE_FreeRTOS_OTAS\n\n"
-    ${GDB_DIR}/arm-none-eabi-gdb ${MSDK}/Examples/MAX32655/BLE_FreeRTOS_OTAS/build/max32655.elf \
+    printf "\n>>>>>> flash ${BLE_FreeRTOS_OTA}\n\n"
+    ${GDB_DIR}/arm-none-eabi-gdb ${MSDK}/Examples/MAX32655/${BLE_FreeRTOS_OTA}/build/max32655.elf \
         -ex "set confirm off" \
         -ex "set architecture armv7e-m" \
-        -ex "symbol-file ${MSDK}/Examples/MAX32655/BLE_FreeRTOS_OTAS/build/max32655.elf" \
+        -ex "symbol-file ${MSDK}/Examples/MAX32655/${BLE_FreeRTOS_OTA}/build/max32655.elf" \
         -ex "target remote | ${OPENOCD_EXE} -c \"gdb_port pipe;\" -s ${OPENOCD}/scripts -f ${OPENOCD}/scripts/interface/cmsis-dap.cfg -f ${OPENOCD}/scripts/target/max32655.cfg -c \"cmsis_dap_serial ${DAP_SERIAL}\" -c \"init; reset halt\"" \
         -ex "load" \
         -ex "compare-section" \
@@ -147,16 +148,16 @@ function build_flash_bootloader_by_gdb
 #verify_otas
 
 # Test 2: failed
-erase_flash
-build_flash_bootloader
-verify_bootloader
-build_flash_otas
-verify_bootloader  # Failed ! Bootloader was wiped out.
+#erase_flash
+#build_flash_bootloader
+#verify_bootloader
+#build_flash_otas
+#verify_bootloader  # Failed ! Bootloader was wiped out.
 
 # Test 3: worked
-#erase_flash
-#build_flash_otas_by_gdb
-#build_flash_bootloader_by_gdb
+erase_flash
+build_flash_otas_by_gdb
+build_flash_bootloader_by_gdb
 
 # Test 4: worked
 #erase_flash
