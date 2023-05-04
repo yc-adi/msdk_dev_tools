@@ -80,7 +80,7 @@ function flash_with_openocd()
     set -x
     
     # mass erase and flash
-    $OPENOCD/src/openocd -f $OPENOCD/tcl/interface/cmsis-dap.cfg -f $OPENOCD/tcl/target/$TARGET_LC.cfg -s $OPENOCD/tcl -c "adapter serial $PORT" -c "gdb_port 3333" -c "telnet_port 4444" -c "tcl_port 6666"  -c "init; reset halt;max32xxx mass_erase 0" -c "program ${TARGET_LC}.elf verify reset exit" > /dev/null &
+    $OPENOCD/openocd -f $OPENOCD/scripts/interface/cmsis-dap.cfg -f $OPENOCD/scripts/target/$TARGET_LC.cfg -s $OPENOCD/scripts -c "adapter serial $PORT" -c "gdb_port 3333" -c "telnet_port 4444" -c "tcl_port 6666"  -c "init; reset halt;max32xxx mass_erase 0" -c "program ${TARGET_LC}.elf verify reset exit" > /dev/null &
     openocd_dapLink_pid=$!
 
     # wait for openocd to finish
@@ -93,12 +93,12 @@ function flash_with_openocd()
     set +x
     
     # Attempt to verify the image, prevent exit on error
-    $OPENOCD/src/openocd -f $OPENOCD/tcl/interface/cmsis-dap.cfg -f $OPENOCD/tcl/target/$TARGET_LC.cfg -s $OPENOCD/tcl -c "adapter serial $PORT" -c "gdb_port 3333" -c "telnet_port 4444" -c "tcl_port 6666"  -c "init; reset halt; flash verify_image $1; reset; exit"
+    $OPENOCD/openocd -f $OPENOCD/scripts/interface/cmsis-dap.cfg -f $OPENOCD/scripts/target/$TARGET_LC.cfg -s $OPENOCD/scripts -c "adapter serial $PORT" -c "gdb_port 3333" -c "telnet_port 4444" -c "tcl_port 6666"  -c "init; reset halt; flash verify_image $1; reset; exit"
 
     # Check the return value to see if we received an error
     if [ "$?" -ne "0" ]; then
         # Reprogram the device if the verify failed
-        $OPENOCD/src/openocd -f $OPENOCD/tcl/interface/cmsis-dap.cfg -f $OPENOCD/tcl/target/$TARGET_LC.cfg -s $OPENOCD/tcl -c "adapter serial $PORT" -c "gdb_port 3333" -c "telnet_port 4444" -c "tcl_port 6666"  -c "init; reset halt;max32xxx mass_erase 0" -c "program $1 verify reset exit" > /dev/null &
+        $OPENOCD/openocd -f $OPENOCD/scripts/interface/cmsis-dap.cfg -f $OPENOCD/scripts/target/$TARGET_LC.cfg -s $OPENOCD/scripts -c "adapter serial $PORT" -c "gdb_port 3333" -c "telnet_port 4444" -c "tcl_port 6666"  -c "init; reset halt;max32xxx mass_erase 0" -c "program $1 verify reset exit" > /dev/null &
         openocd_dapLink_pid=$!
     fi
 }
