@@ -7,6 +7,13 @@ echo "##########################################################################
 echo
 
 echo args: $@
+
+
+
+VERBOSE=&>/dev/null
+
+BRD_1=max32655_board_y3
+
 DUT_BOARD_TYPE=$5
 echo "DUT_BOARD_TYPE:" $DUT_BOARD_TYPE
 echo
@@ -20,6 +27,10 @@ echo "MSDK_DIR: "$MSDK_DIR
 
 failedTestList=" "
 numOfFailedTests=0
+
+echo "Use python 3.10.9."
+source ~/anaconda3/etc/profile.d/conda.sh
+conda activate py3_10
 
 #***************************************** Helper functions *****************************************
 #****************************************************************************************************
@@ -46,11 +57,11 @@ function initial_setup() {
         FILE=/home/$USER/Workspace/Resource_Share/boards_config.json
         # WALL-E  paths
         export OPENOCD_TCL_PATH=/home/btm-ci/Tools/openocd/tcl
-        export OPENOCD=/home/btm-ci/Tools/openocd/src/openocd
-        export ROBOT=/home/btm-ci/.local/bin/robot
+        export OPENOCD=/home/$USER/Tools/openocd/src/openocd
+        export ROBOT=/home/$USER/.local/bin/robot
 
-        MAIN_DEVICE_ID=$(/usr/bin/python3 -c "import sys, json; print(json.load(open('$FILE'))['max32655_board1']['daplink'])")
-        main_uart=$(/usr/bin/python3 -c "import sys, json; print(json.load(open('$FILE'))['max32655_board1']['uart0'])")
+        MAIN_DEVICE_ID=$(/usr/bin/python3 -c "import sys, json; print(json.load(open('$FILE'))['$BRD_1']['daplink'])")
+        main_uart=$(/usr/bin/python3 -c "import sys, json; print(json.load(open('$FILE'))['$BRD_1']['uart0'])")
         MAIN_DEVICE_SERIAL_PORT=/dev/"$(ls -la /dev/serial/by-id | grep -n $main_uart | rev | cut -d "/" -f1 | rev)"
 
         # Get the serial number of all daplink devices, this is used to erase them all.
@@ -62,15 +73,19 @@ function initial_setup() {
         FILE=/home/$USER/Workspace/Resource_Share/boards_config.json
 
         export OPENOCD_TCL_PATH=/home/$USER/Tools/openocd/tcl
-        export OPENOCD=/home/$USER/Tools/openocd/src/openocd
+        export OPENOCD=/home/$USER/MaximSDK/Tools/OpenOCD/openocd
         export ROBOT=/home/$USER/.local/bin/robot
 
-        MAIN_DEVICE_ID=$(/usr/bin/python3 -c "import sys, json; print(json.load(open('$FILE'))['max32655_board_y1']['daplink'])")
-        main_uart=$(/usr/bin/python3 -c "import sys, json; print(json.load(open('$FILE'))['max32655_board_y1']['uart0'])")
+        MAIN_DEVICE_ID=$(/usr/bin/python3 -c "import sys, json; print(json.load(open('$FILE'))['$BRD_1']['daplink'])")
+        main_uart=$(/usr/bin/python3 -c "import sys, json; print(json.load(open('$FILE'))['$BRD_1']['uart0'])")
         MAIN_DEVICE_SERIAL_PORT=/dev/"$(ls -la /dev/serial/by-id | grep -n $main_uart | rev | cut -d "/" -f1 | rev)"
 
-        # Get the serial number of all daplink devices, this is used to erase them all.
+        echo 
+        echo "MAIN_DEVICE_ID: "$MAIN_DEVICE_ID
+        echo "MAIN_DEVICE_SERIAL_PORT: "$MAIN_DEVICE_SERIAL_PORT
+        echo
 
+        # Get the serial number of all daplink devices, this is used to erase them all.
     else
         # Local- eddie desktop
         FILE=/home/$USER/boards_config.json
@@ -129,7 +144,10 @@ function initial_setup() {
 function flash_with_openocd() {
     # mass erase and flash
     set +e
-    $OPENOCD -f $OPENOCD_TCL_PATH/interface/cmsis-dap.cfg -f $OPENOCD_TCL_PATH/target/$1.cfg -s $OPENOCD_TCL_PATH -c "cmsis_dap_serial  $2" -c "gdb_port 3333" -c "telnet_port 4444" -c "tcl_port 6666" -c "init; reset halt;max32xxx mass_erase 0" -c "program $1.elf verify reset exit" >/dev/null &
+    set -x
+    $OPENOCD -f $OPENOCD_TCL_PATH/interface/cmsis-dap.cfg -f $OPENOCD_TCL_PATH/target/$1.cfg -s $OPENOCD_TCL_PATH -c "cmsis_dap_serial  $2" -c "gdb_port 3333" -c "telnet_port 4444" -c "tcl_port 6666" -c "init; reset halt;max32xxx mass_erase 0" -c "program $1.elf verify reset exit"
+    set +x
+
     openocd_dapLink_pid=$!
     # wait for openocd to finish
     while kill -0 $openocd_dapLink_pid; do
@@ -142,7 +160,9 @@ function flash_with_openocd() {
     if [ "$?" -ne "0" ]; then
         printf "> Verify failed , flashibng again \r\n"
         # Reprogram the device if the verify failed
+        set -x
         $OPENOCD -f $OPENOCD_TCL_PATH/interface/cmsis-dap.cfg -f $OPENOCD_TCL_PATH/target/$1.cfg -s $OPENOCD_TCL_PATH -c "cmsis_dap_serial  $2" -c "gdb_port 3333" -c "telnet_port 4444" -c "tcl_port 6666" -c "init; reset halt;max32xxx mass_erase 0" -c "program $1.elf verify reset exit" >/dev/null &
+        set +x
         openocd_dapLink_pid=$!
     fi
 }
@@ -497,45 +517,51 @@ function run_ota_test() {
     # change advertising names
     change_advertising_names
 
+    set -x
     # change the target the OTAC embedded firmware in the client is built for
     cd $MSDK_DIR/Examples/$MAIN_DEVICE_NAME_UPPER/BLE_otac
     #appends TARGET , TARGET_UC and TARGET_LC to the make commands and sets them to $DUT_NAME_UPPER and $DUT_NAME_LOWER
     sed -i 's/BUILD_DIR=\$(FW_BUILD_DIR) BUILD_BOOTLOADER=0 PROJECT=fw_update/BUILD_DIR=\$(FW_BUILD_DIR) BUILD_BOOTLOADER=0 PROJECT=fw_update TARGET='"$DUT_NAME_UPPER"' TARGET_UC='"$DUT_NAME_UPPER"' TARGET_LC='"$DUT_NAME_LOWER"'/g' project.mk
     sed -i 's/BUILD_DIR=\$(FW_BUILD_DIR) \$(FW_UPDATE_BIN)/BUILD_DIR=\$(FW_BUILD_DIR) \$(FW_UPDATE_BIN) TARGET='"$DUT_NAME_UPPER"' TARGET_UC='"$DUT_NAME_UPPER"' TARGET_LC='"$DUT_NAME_LOWER"'/g' project.mk
+    set +x
 
     sleep 1
-    # Make OTAS V1 and flash
+    printf "\n\n\n>>>>>> Make OTAS V1 and flash\n\n"
     cd $MSDK_DIR/Examples/$DUT_NAME_UPPER/BLE_otas
-    make clean
-    make BOARD=$DUT_BOARD_TYPE USE_INTERNAL_FLASH=$INTERNAL_FLASH_TEST BUILD_BOOTLOADER=0 -j
+    make clean $VERBOSE
+    make BOARD=$DUT_BOARD_TYPE USE_INTERNAL_FLASH=$INTERNAL_FLASH_TEST BUILD_BOOTLOADER=0 -j $VERBOSE
+
     cd $MSDK_DIR/Examples/$DUT_NAME_UPPER/BLE_otas/build
     printf "\r\n\r\n>>>>>>>> Flashing BLE_otas V1 on DUT $DUT_NAME_UPP\r\n\r\n"
     flash_with_openocd $DUT_NAME_LOWER $DUT_ID
 
-    # Flash bootloader : arg : USE_INTERNAL_FLASH
+    printf "\n\n>>>>>> Flash bootloader : arg : USE_INTERNAL_FLASH\n\n"
     flash_bootloader $INTERNAL_FLASH_TEST
 
-    # change OTAS firmware version and rebuild
+    printf "\n\n>>>>>> change OTAS firmware version and rebuild\n\n"
     cd $MSDK_DIR/Examples/$DUT_NAME_UPPER/BLE_otas
     # change firmware version to verify otas worked
     if [[ $INTERNAL_FLASH_TEST == 1 ]]; then
+        set -x
         perl -i -pe "s/FW_VERSION_MAJOR 1/FW_VERSION_MAJOR 2/g" wdxs_file_int.c
+        set +x
     else
         perl -i -pe "s/FW_VERSION_MAJOR 1/FW_VERSION_MAJOR 2/g" wdxs_file_ext.c
     fi
-    make clean
-    make BOARD=$DUT_BOARD_TYPE USE_INTERNAL_FLASH=$INTERNAL_FLASH_TEST BUILD_BOOTLOADER=0 -j
+    make clean  $VERBOSE
+    make BOARD=$DUT_BOARD_TYPE USE_INTERNAL_FLASH=$INTERNAL_FLASH_TEST BUILD_BOOTLOADER=0 -j  $VERBOSE
     echo "BOARD=$DUT_BOARD_TYPE USE_INTERNAL_FLASH=$INTERNAL_FLASH_TEST -j"
-    # make OTAC
+
+    printf "\n\n>>>>>> make OTAC\n\n"
     cd $MSDK_DIR/Examples/$MAIN_DEVICE_NAME_UPPER/BLE_otac
     # flash MAIN_DEVICE with BLE_OTAC, it will use the OTAS bin with new firmware
-    make clean
-    make BOARD=$DUT_BOARD_TYPE FW_UPDATE_DIR=../../$DUT_NAME_UPPER/BLE_otas USE_INTERNAL_FLASH=$INTERNAL_FLASH_TEST BUILD_BOOTLOADER=0 -j
+    make clean  $VERBOSE
+    make BOARD=$DUT_BOARD_TYPE FW_UPDATE_DIR=../../$DUT_NAME_UPPER/BLE_otas USE_INTERNAL_FLASH=$INTERNAL_FLASH_TEST BUILD_BOOTLOADER=0 -j  $VERBOSE
 
     cd $MSDK_DIR/Examples/$MAIN_DEVICE_NAME_UPPER/BLE_otac/build
-    printf ">>>>>>> Flashing BLE_otac on main device: $MAIN_DEVICE_NAME_UPPER\r\n "
+    printf "\n\n>>>>>>> Flashing BLE_otac on main device: $MAIN_DEVICE_NAME_UPPER\r\n\n"
     flash_with_openocd $MAIN_DEVICE_NAME_LOWER $MAIN_DEVICE_ID
-    printf ">>>>>>> Flashing done"
+    printf "\n\n>>>>>>> Flashing done\n\n"
 
     #revert files back
     cd $MSDK_DIR/Examples/$MAIN_DEVICE_NAME_UPPER/BLE_otac
@@ -597,14 +623,16 @@ change_advertising_names
 # Temporary fix until RF Closed is merged into RF Phy
 # Build a specific RF-PHY-closed branch
 cd $MSDK_DIR/Libraries
-if [ ! -d $MSDK_DIR/Libraries/RF-PHY-closed ]; then
+if [ -d $MSDK_DIR/Libraries/RF-PHY-closed ]; then
+    echo "RF-PHY-closed exists."
+else
     git clone git@github.com:Analog-Devices-MSDK/RF-PHY-closed.git
 fi
 cd $MSDK_DIR/Libraries/RF-PHY-closed
-git checkout ME17B1-new
-cd MAX32655/build/gcc
-make clean
-make -j
+#git checkout ME17B1-new
+#cd MAX32655/build/gcc
+#make clean
+#make -j
 
 if [ $CURRENT_TEST == "all" ]; then
     echo
@@ -633,8 +661,8 @@ elif [ $CURRENT_TEST == "ota" ]; then
     echo
     echo "Running OTA test"
     # temp diasble datc/s and otas tests until new RF PHY is debugged with ME17B
-    # erase_all_devices
-    # run_ota_test 1 # arg 1 = internal flash
+    erase_all_devices
+    run_ota_test 1 # arg 1 = internal flash
     # if [[ $DUT_NAME_UPPER != "MAX32690" ]]; then
     # run_ota_test 0 # arg 0= external flash
     #fi
@@ -647,7 +675,7 @@ else
 fi
 
 if [ $CURRENT_TEST == "all" ]; then
-    echo "=============================================================================="
+    echo "\n\n=============================================================================="
     echo "=============================================================================="
 
     if [[ $numOfFailedTests -ne 0 ]]; then
