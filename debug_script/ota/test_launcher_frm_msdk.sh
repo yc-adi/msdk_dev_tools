@@ -3,18 +3,25 @@
 echo
 echo "############################################################################################################"
 echo "# test_launcher.sh <1target(lc)> <2DUT control port> <3DUT DAP sn> <4test type> <5optional board> <6msdk>  #"
-echo "###########################################################################################################"
+echo "############################################################################################################"
 echo
 
 echo args: $@
 
+VERBOSE() {
+    "$@" &> /dev/null
+}
 
+#OTA_PRJ=BLE_otas
+OTA_PRJ=BLE_cgm
+echo "OTA_PRJ:" $OTA_PRJ
+echo
 
-VERBOSE=&>/dev/null
-
+# The board used to provide the new firmware
 BRD_1=max32655_board_y3
 
 DUT_BOARD_TYPE=$5
+echo
 echo "DUT_BOARD_TYPE:" $DUT_BOARD_TYPE
 echo
 
@@ -24,6 +31,7 @@ EXAMPLE_TEST_PATH=$(pwd)
 cd ../../../../
 MSDK_DIR=$(pwd)
 echo "MSDK_DIR: "$MSDK_DIR
+echo
 
 failedTestList=" "
 numOfFailedTests=0
@@ -145,7 +153,7 @@ function flash_with_openocd() {
     # mass erase and flash
     set +e
     set -x
-    $OPENOCD -f $OPENOCD_TCL_PATH/interface/cmsis-dap.cfg -f $OPENOCD_TCL_PATH/target/$1.cfg -s $OPENOCD_TCL_PATH -c "cmsis_dap_serial  $2" -c "gdb_port 3333" -c "telnet_port 4444" -c "tcl_port 6666" -c "init; reset halt;max32xxx mass_erase 0" -c "program $1.elf verify reset exit"
+    VERBOSE $OPENOCD -f $OPENOCD_TCL_PATH/interface/cmsis-dap.cfg -f $OPENOCD_TCL_PATH/target/$1.cfg -s $OPENOCD_TCL_PATH -c "cmsis_dap_serial  $2" -c "gdb_port 3333" -c "telnet_port 4444" -c "tcl_port 6666" -c "init; reset halt;max32xxx mass_erase 0" -c "program $1.elf verify reset exit"
     set +x
 
     openocd_dapLink_pid=$!
@@ -161,7 +169,7 @@ function flash_with_openocd() {
         printf "> Verify failed , flashibng again \r\n"
         # Reprogram the device if the verify failed
         set -x
-        $OPENOCD -f $OPENOCD_TCL_PATH/interface/cmsis-dap.cfg -f $OPENOCD_TCL_PATH/target/$1.cfg -s $OPENOCD_TCL_PATH -c "cmsis_dap_serial  $2" -c "gdb_port 3333" -c "telnet_port 4444" -c "tcl_port 6666" -c "init; reset halt;max32xxx mass_erase 0" -c "program $1.elf verify reset exit" >/dev/null &
+        VERBOSE $OPENOCD -f $OPENOCD_TCL_PATH/interface/cmsis-dap.cfg -f $OPENOCD_TCL_PATH/target/$1.cfg -s $OPENOCD_TCL_PATH -c "cmsis_dap_serial  $2" -c "gdb_port 3333" -c "telnet_port 4444" -c "tcl_port 6666" -c "init; reset halt;max32xxx mass_erase 0" -c "program $1.elf verify reset exit" &
         set +x
         openocd_dapLink_pid=$!
     fi
@@ -184,7 +192,7 @@ function reset_board_by_openocd() {
 function flash_with_openocd_fast() {
     # mass erase and flash
     set +e
-    $OPENOCD -f $OPENOCD_TCL_PATH/interface/cmsis-dap.cfg -f $OPENOCD_TCL_PATH/target/$1.cfg -s $OPENOCD_TCL_PATH -c "cmsis_dap_serial  $2" -c "gdb_port 333$3" -c "telnet_port 444$3" -c "tcl_port 666$3" -c "init; reset halt;max32xxx mass_erase 0" -c "program $1.elf verify reset exit" >/dev/null &
+    $OPENOCD -f $OPENOCD_TCL_PATH/interface/cmsis-dap.cfg -f $OPENOCD_TCL_PATH/target/$1.cfg -s $OPENOCD_TCL_PATH -c "cmsis_dap_serial  $2" -c "gdb_port 333$3" -c "telnet_port 444$3" -c "tcl_port 666$3" -c "init; reset halt;max32xxx mass_erase 0" -c "program $1.elf verify reset exit" &
     openocd_dapLink_pid=$!
     set -e
 }
@@ -193,7 +201,7 @@ function flash_with_openocd_fast() {
 function softreset_with_openocd() {
     echo "> Restting board $1"
     set +e
-    $OPENOCD -f $OPENOCD_TCL_PATH/interface/cmsis-dap.cfg -f $OPENOCD_TCL_PATH/target/$1.cfg -s $OPENOCD_TCL_PATH -c "cmsis_dap_serial  $2" -c "gdb_port 3333" -c "telnet_port 4444" -c "tcl_port 6666" -c "init;reset exit" >/dev/null &
+    $OPENOCD -f $OPENOCD_TCL_PATH/interface/cmsis-dap.cfg -f $OPENOCD_TCL_PATH/target/$1.cfg -s $OPENOCD_TCL_PATH -c "cmsis_dap_serial  $2" -c "gdb_port 3333" -c "telnet_port 4444" -c "tcl_port 6666" -c "init;reset exit" &
     openocd_dapLink_pid=$!
     # wait for openocd to finish
     while kill -0 $openocd_dapLink_pid; do
@@ -210,7 +218,9 @@ function erase_with_openocd() {
     echo "-----------------------------------------------------------------------------------------"
     echo
 
-    $OPENOCD -f $OPENOCD_TCL_PATH/interface/cmsis-dap.cfg -f $OPENOCD_TCL_PATH/target/$1.cfg -s $OPENOCD_TCL_PATH/ -c "cmsis_dap_serial  $2" -c "gdb_port 3333" -c "telnet_port 4444" -c "tcl_port 6666" -c "init; reset halt; max32xxx mass_erase 0;" -c " exit" &
+    set -x
+    VERBOSE $OPENOCD -f $OPENOCD_TCL_PATH/interface/cmsis-dap.cfg -f $OPENOCD_TCL_PATH/target/$1.cfg -s $OPENOCD_TCL_PATH/ -c "cmsis_dap_serial  $2" -c "gdb_port 3333" -c "telnet_port 4444" -c "tcl_port 6666" -c "init; reset halt; max32xxx mass_erase 0;" -c " exit" & 
+    set +x
     openocd_dapLink_pid=$!
     # wait for openocd to finish
     wait $openocd_dapLink_pid
@@ -218,7 +228,9 @@ function erase_with_openocd() {
     # erase second bank of larger chips
     if [[ $1 != "max32655" ]]; then
         printf "> Erasing second bank of device: $1 with ID:$2 \r\n"
-        $OPENOCD -f $OPENOCD_TCL_PATH/interface/cmsis-dap.cfg -f $OPENOCD_TCL_PATH/target/$1.cfg -s $OPENOCD_TCL_PATH/ -c "cmsis_dap_serial  $2" -c "gdb_port 3333" -c "telnet_port 4444" -c "tcl_port 6666" -c "init; reset halt; max32xxx mass_erase 1;" -c " exit" &
+        set -x
+        VERBOSE $OPENOCD -f $OPENOCD_TCL_PATH/interface/cmsis-dap.cfg -f $OPENOCD_TCL_PATH/target/$1.cfg -s $OPENOCD_TCL_PATH/ -c "cmsis_dap_serial  $2" -c "gdb_port 3333" -c "telnet_port 4444" -c "tcl_port 6666" -c "init; reset halt; max32xxx mass_erase 1;" -c " exit" &
+        set +x
         openocd_dapLink_pid=$!
         # wait for openocd to finish
         wait $openocd_dapLink_pid
@@ -269,17 +281,20 @@ function run_notConntectedTest() {
 #****************************************************************************************************
 function flash_bootloader() {
     echo "Flashing bootloader on $DUT_BOARD_TYPE with USE_INTERNAL_FLASH=$1"
+    set -x
     cd $MSDK_DIR/Examples/$DUT_NAME_UPPER/Bootloader
-    make clean
-    make libclean
-    make BOARD=$DUT_BOARD_TYPE USE_INTERNAL_FLASH=$1 -j
-
+    VERBOSE make clean
+    VERBOSE make libclean
+    VERBOSE make BOARD=$DUT_BOARD_TYPE USE_INTERNAL_FLASH=$1 -j
+    set +x
     cd $MSDK_DIR/Examples/$DUT_NAME_UPPER/Bootloader/build
 
     #not using the flash_with_openocd function here because that causes the application code to be erased and only
     #bootloader to remain
     set +e
-    $OPENOCD -f $OPENOCD_TCL_PATH/interface/cmsis-dap.cfg -f $OPENOCD_TCL_PATH/target/$DUT_NAME_LOWER.cfg -s $OPENOCD_TCL_PATH -c "cmsis_dap_serial  $DUT_ID" -c "gdb_port 3333" -c "telnet_port 4444" -c "tcl_port 6666" -c "init; reset halt" -c "program $DUT_NAME_LOWER.elf verify reset exit" >/dev/null &
+    set -x
+    VERBOSE $OPENOCD -f $OPENOCD_TCL_PATH/interface/cmsis-dap.cfg -f $OPENOCD_TCL_PATH/target/$DUT_NAME_LOWER.cfg -s $OPENOCD_TCL_PATH -c "cmsis_dap_serial  $DUT_ID" -c "gdb_port 3333" -c "telnet_port 4444" -c "tcl_port 6666" -c "init; reset halt" -c "program $DUT_NAME_LOWER.elf verify reset exit" &
+    set +x
     openocd_dapLink_pid=$!
     # wait for openocd to finish
     while kill -0 $openocd_dapLink_pid; do
@@ -288,12 +303,14 @@ function flash_bootloader() {
     done
     set -e
     # Attempt to verify the image, prevent exit on error
-    $OPENOCD -f $OPENOCD_TCL_PATH/interface/cmsis-dap.cfg -f $OPENOCD_TCL_PATH/target/$DUT_NAME_LOWER.cfg -s $OPENOCD_TCL_PATH/ -c "cmsis_dap_serial  $DUT_ID" -c "gdb_port 3333" -c "telnet_port 4444" -c "tcl_port 6666" -c "init; reset halt; flash verify_image $DUT_NAME_LOWER.elf; reset; exit"
+    set -x
+    VERBOSE $OPENOCD -f $OPENOCD_TCL_PATH/interface/cmsis-dap.cfg -f $OPENOCD_TCL_PATH/target/$DUT_NAME_LOWER.cfg -s $OPENOCD_TCL_PATH/ -c "cmsis_dap_serial  $DUT_ID" -c "gdb_port 3333" -c "telnet_port 4444" -c "tcl_port 6666" -c "init; reset halt; flash verify_image $DUT_NAME_LOWER.elf; reset; exit"
+    set +x
 
     # Check the return value to see if we received an error
     if [ "$?" -ne "0" ]; then
         # Reprogram the device if the verify failed
-        $OPENOCD -f $OPENOCD_TCL_PATH/interface/cmsis-dap.cfg -f $OPENOCD_TCL_PATH/target/$DUT_NAME_LOWER.cfg -s $OPENOCD_TCL_PATH -c "cmsis_dap_serial  $DUT_ID" -c "gdb_port 3333" -c "telnet_port 4444" -c "tcl_port 6666" -c "init; reset halt" -c "program $DUT_NAME_LOWER.elf verify reset exit" >/dev/null &
+        $OPENOCD -f $OPENOCD_TCL_PATH/interface/cmsis-dap.cfg -f $OPENOCD_TCL_PATH/target/$DUT_NAME_LOWER.cfg -s $OPENOCD_TCL_PATH -c "cmsis_dap_serial  $DUT_ID" -c "gdb_port 3333" -c "telnet_port 4444" -c "tcl_port 6666" -c "init; reset halt" -c "program $DUT_NAME_LOWER.elf verify reset exit" &
         openocd_dapLink_pid=$!
     fi
 }
@@ -497,6 +514,7 @@ function run_datcs_conencted_tests() {
 #****************************************************************************************************
 function run_ota_test() {
     INTERNAL_FLASH_TEST=$1
+
     echo
     echo "****************************************************************************************************"
     if [[ "$INTERNAL_FLASH_TEST" -ne "0" ]]; then
@@ -508,7 +526,7 @@ function run_ota_test() {
     # ME18 evkit does not have external flash
 
     # #make sure all files have correct settings
-    cd $MSDK_DIR/Examples/$DUT_NAME_UPPER/BLE_otas
+    cd $MSDK_DIR/Examples/$DUT_NAME_UPPER/$OTA_PRJ
     git restore .
 
     cd $MSDK_DIR/Examples/$DUT_NAME_UPPER/Bootloader
@@ -526,20 +544,24 @@ function run_ota_test() {
     set +x
 
     sleep 1
-    printf "\n\n\n>>>>>> Make OTAS V1 and flash\n\n"
-    cd $MSDK_DIR/Examples/$DUT_NAME_UPPER/BLE_otas
-    make clean $VERBOSE
-    make BOARD=$DUT_BOARD_TYPE USE_INTERNAL_FLASH=$INTERNAL_FLASH_TEST BUILD_BOOTLOADER=0 -j $VERBOSE
+    printf "\n\n\n>>>>>> Make firmware V1 and flash\n\n"
+    set -x
+    cd $MSDK_DIR/Examples/$DUT_NAME_UPPER/$OTA_PRJ
+    VERBOSE make clean
+    VERBOSE make BOARD=$DUT_BOARD_TYPE USE_INTERNAL_FLASH=$INTERNAL_FLASH_TEST BUILD_BOOTLOADER=0 -j
+    set +x
 
-    cd $MSDK_DIR/Examples/$DUT_NAME_UPPER/BLE_otas/build
-    printf "\r\n\r\n>>>>>>>> Flashing BLE_otas V1 on DUT $DUT_NAME_UPP\r\n\r\n"
+    cd $MSDK_DIR/Examples/$DUT_NAME_UPPER/$OTA_PRJ/build
+    printf "\r\n\r\n>>>>>>>> Flashing $OTA_PRJ V1 on DUT $DUT_NAME_UPP\r\n\r\n"
     flash_with_openocd $DUT_NAME_LOWER $DUT_ID
 
-    printf "\n\n>>>>>> Flash bootloader : arg : USE_INTERNAL_FLASH\n\n"
-    flash_bootloader $INTERNAL_FLASH_TEST
+    if [ "$OTA_PRJ" != "BLE_cgm" ]; then
+        printf "\n\n>>>>>> Flash bootloader : arg : USE_INTERNAL_FLASH\n\n"
+        flash_bootloader $INTERNAL_FLASH_TEST
+    fi
 
-    printf "\n\n>>>>>> change OTAS firmware version and rebuild\n\n"
-    cd $MSDK_DIR/Examples/$DUT_NAME_UPPER/BLE_otas
+    printf "\n\n>>>>>> change $OTA_PRJ firmware version and rebuild\n\n"
+    cd $MSDK_DIR/Examples/$DUT_NAME_UPPER/$OTA_PRJ
     # change firmware version to verify otas worked
     if [[ $INTERNAL_FLASH_TEST == 1 ]]; then
         set -x
@@ -548,15 +570,19 @@ function run_ota_test() {
     else
         perl -i -pe "s/FW_VERSION_MAJOR 1/FW_VERSION_MAJOR 2/g" wdxs_file_ext.c
     fi
-    make clean  $VERBOSE
-    make BOARD=$DUT_BOARD_TYPE USE_INTERNAL_FLASH=$INTERNAL_FLASH_TEST BUILD_BOOTLOADER=0 -j  $VERBOSE
+    VERBOSE make clean
+    set -x
+    VERBOSE make BOARD=$DUT_BOARD_TYPE USE_INTERNAL_FLASH=$INTERNAL_FLASH_TEST BUILD_BOOTLOADER=0 -j
+    set +x
     echo "BOARD=$DUT_BOARD_TYPE USE_INTERNAL_FLASH=$INTERNAL_FLASH_TEST -j"
 
     printf "\n\n>>>>>> make OTAC\n\n"
     cd $MSDK_DIR/Examples/$MAIN_DEVICE_NAME_UPPER/BLE_otac
     # flash MAIN_DEVICE with BLE_OTAC, it will use the OTAS bin with new firmware
-    make clean  $VERBOSE
-    make BOARD=$DUT_BOARD_TYPE FW_UPDATE_DIR=../../$DUT_NAME_UPPER/BLE_otas USE_INTERNAL_FLASH=$INTERNAL_FLASH_TEST BUILD_BOOTLOADER=0 -j  $VERBOSE
+    VERBOSE make clean
+    set -x
+    VERBOSE make BOARD=$DUT_BOARD_TYPE FW_UPDATE_DIR=../../$DUT_NAME_UPPER/$OTA_PRJ USE_INTERNAL_FLASH=$INTERNAL_FLASH_TEST BUILD_BOOTLOADER=0 -j
+    set +x
 
     cd $MSDK_DIR/Examples/$MAIN_DEVICE_NAME_UPPER/BLE_otac/build
     printf "\n\n>>>>>>> Flashing BLE_otac on main device: $MAIN_DEVICE_NAME_UPPER\r\n\n"
@@ -588,17 +614,16 @@ function run_ota_test() {
             # test failed, save elfs datc/s
             cd $MSDK_DIR/Examples/$MAIN_DEVICE_NAME_UPPER/BLE_otac/build
             cp $MAIN_DEVICE_NAME_LOWER.elf $EXAMPLE_TEST_PATH/results/failed_elfs/$MAIN_DEVICE_NAME_LOWER"_"$DUT_NAME_LOWER"_BLE_otacs_client_int.elf"
-            cd $MSDK_DIR/Examples/$DUT_NAME_UPPER/BLE_otas/build
+            cd $MSDK_DIR/Examples/$DUT_NAME_UPPER/$OTA_PRJ/build
             cp $DUT_NAME_LOWER.elf $EXAMPLE_TEST_PATH/results/failed_elfs/$DUT_NAME_LOWER"_BLE_otacs_server_int.elf"
         else
             failedTestList+="| BLE_ota_cs_ext ($DUT_NAME_UPPER) "
             # test failed, save elfs datc/s
             cd $MSDK_DIR/Examples/$MAIN_DEVICE_NAME_UPPER/BLE_otac/build
             cp $MAIN_DEVICE_NAME_LOWER.elf $EXAMPLE_TEST_PATH/results/failed_elfs/$MAIN_DEVICE_NAME_LOWER"_"$DUT_NAME_LOWER"_BLE_otacs_client_ext.elf"
-            cd $MSDK_DIR/Examples/$DUT_NAME_UPPER/BLE_otas/build
+            cd $MSDK_DIR/Examples/$DUT_NAME_UPPER/$OTA_PRJ/build
             cp $DUT_NAME_LOWER.elf $EXAMPLE_TEST_PATH/results/failed_elfs/$DUT_NAME_LOWER"_BLE_otacs_server_ext.elf"
         fi
-
     fi
     set -e
 
@@ -607,7 +632,6 @@ function run_ota_test() {
     #   erase_with_openocd $MAIN_DEVICE_NAME_LOWER $MAIN_DEVICE_ID
 
     erase_all_devices
-
 }
 
 #****************************************************************************************************
@@ -650,6 +674,7 @@ if [ $CURRENT_TEST == "all" ]; then
     # fi
 
     echo
+    
 elif [ $CURRENT_TEST == "dats" ]; then
     echo
     echo "Running Datc/s connected test"
@@ -657,15 +682,15 @@ elif [ $CURRENT_TEST == "dats" ]; then
     # temp diasble datc/s and otas tests until new RF PHY is debugged with ME17B
     #run_datcs_conencted_tests
     echo
+
 elif [ $CURRENT_TEST == "ota" ]; then
     echo
-    echo "Running OTA test"
-    # temp diasble datc/s and otas tests until new RF PHY is debugged with ME17B
+    printf "\n\n>>>>>> Running OTA test\n\n"
+
     erase_all_devices
+
     run_ota_test 1 # arg 1 = internal flash
-    # if [[ $DUT_NAME_UPPER != "MAX32690" ]]; then
-    # run_ota_test 0 # arg 0= external flash
-    #fi
+
     echo
 else
     echo
