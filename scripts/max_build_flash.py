@@ -17,6 +17,7 @@ from datetime import datetime as dt
 import json
 import os
 from pprint import pprint
+import socket
 from subprocess import call, Popen, PIPE, CalledProcessError, STDOUT
 import sys
 import time
