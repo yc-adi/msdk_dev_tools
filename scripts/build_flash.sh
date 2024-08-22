@@ -33,21 +33,22 @@ function build()
     echo "-----------------------------------------------------------------------------------------"
     echo
 
-    cd $MSDK/Examples/$TARGET/$PROJECT
+    cd $MSDK/Examples/$TARGET/Bluetooth/$PROJECT
     echo PWD=`pwd`
-    bash -x -c "ls -d .*/ $MSDK/Examples/$TARGET/$PROJECT"
+    bash -x -c "ls -d .*/ $MSDK/Examples/$TARGET/Bluetooth/$PROJECT"
     echo 
 
     set -e
     set -x
 
+    make MAXIM_PATH=$MSDK clean
     make MAXIM_PATH=$MSDK distclean
     echo
 
-    ls -d .*/ $MSDK/Examples/$TARGET/$PROJECT
+    ls -d .*/ $MSDK/Examples/$TARGET/Bluetooth/$PROJECT
     echo
 
-    make -j1 MAXIM_PATH=$MSDK TARGET=$TARGET BOARD=$BOARD_TYPE
+    make -j $(expr $(nproc) - 1) MAXIM_PATH=$MSDK TARGET=$TARGET BOARD=$BOARD_TYPE
 
     set +x
     set +e
@@ -61,7 +62,7 @@ function flash_boards()
     echo "-----------------------------------------------------------------------------------------"
     echo
 
-    cd $MSDK/Examples/$TARGET/$PROJECT
+    cd $MSDK/Examples/$TARGET/Bluetooth/$PROJECT
     echo PWD=`pwd`
     echo
 
@@ -73,7 +74,7 @@ function flash_boards()
 function flash_with_openocd()
 {
     echo "Board DAP: $PORT"
-    cd $MSDK/Examples/$TARGET/$PROJECT/build
+    cd $MSDK/Examples/$TARGET/Bluetooth/$PROJECT/build
     echo PWD=`pwd`
     echo
     
@@ -124,5 +125,5 @@ function main()
 main
 
 echo "---------------------------------------------------------------------------------------------"
-echo "DONE!"
+echo "DONE: build_flash.sh"
 echo "---------------------------------------------------------------------------------------------"
